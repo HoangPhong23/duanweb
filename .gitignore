@@ -1,0 +1,10 @@
+SCC-SIS-FE/.env
+SCC-SIS-FE/.env
+.playwright-mcp/
+node_modules/
+dist/
+build/
+target/
+*.log
+SCC-SIS-BE/target/
+SCC-SIS-BE/src/main/resources/application.properties

@@ -1,0 +1,52 @@
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+# Env files
+.env
+
+### File Uploads (ignore uploaded files) ###
+uploads/
+uploads/syllabus/
+
+### Test Documentation ###
+TEST_DOCUMENTATION.md
+README_TESTING.md
+README_CICD.md
+
+### Deployment Documentation ###
+DEPLOY_VPS_UBUNTU.md
+
+### JaCoCo Coverage Reports ###
+target/site/jacoco/
+target/jacoco.exec
