@@ -18,11 +18,13 @@ import {
     Star,
     Lightbulb,
     GraduationCap,
+    MessageSquare,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUserProfile } from '@/stores/userProfile';
-import { getMyClasses, type ClassDto } from '@/shared/api/classes';
+import { getMyClasses, listClasses, type ClassDto } from '@/shared/api/classes';
 import { getModulesByProgram, type ModuleResponse } from '@/shared/api/modules';
+import { getOrCreateClassGroupRoom } from '@/shared/api/chat';
 import { useToast } from '@/shared/hooks/useToast';
 import { useProgressStore } from '../../hooks/useProgressStore';
 
@@ -73,6 +75,8 @@ export default function MyClassesPage() {
     const [classes, setClasses] = useState<ClassDto[]>([]);
     const [modules, setModules] = useState<ModuleWithStatus[]>([]);
     const [loading, setLoading] = useState(false);
+    const [centerClasses, setCenterClasses] = useState<ClassDto[]>([]);
+    const [loadingCenterClasses, setLoadingCenterClasses] = useState(false);
 
     // Document viewer
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -94,6 +98,27 @@ export default function MyClassesPage() {
             loadClasses();
         }
     }, [me?.userId]);
+
+    // Load all classes at center for suggestions
+    useEffect(() => {
+        const fetchCenterClasses = async () => {
+            setLoadingCenterClasses(true);
+            try {
+                const res = await listClasses();
+                // Exclude classes student already enrolled, show ONGOING + PLANNED only
+                const myClassIds = new Set(classes.map(c => c.classId));
+                const suggestions = res.data
+                    .filter(c => !myClassIds.has(c.classId) && (c.status === 'ONGOING' || c.status === 'PLANNED'))
+                    .slice(0, 6);
+                setCenterClasses(suggestions);
+            } catch {
+                // Silently fail
+            } finally {
+                setLoadingCenterClasses(false);
+            }
+        };
+        fetchCenterClasses();
+    }, [classes]);
 
     // Load classes for student
     const loadClasses = async () => {
@@ -303,17 +328,6 @@ export default function MyClassesPage() {
             },
         ];
 
-        // Mock recommended courses
-        const recommendedCourses = [
-            {
-                title: 'React Nâng cao',
-                description: 'Hooks, Context, Performance',
-                difficulty: 'Intermediate',
-                students: '2.5k',
-            },
-            { title: 'NodeJS cơ bản', description: 'Backend với Express', difficulty: 'Beginner', students: '3.2k' },
-            { title: 'Git & CI/CD', description: 'Version control hiện đại', difficulty: 'Beginner', students: '1.8k' },
-        ];
 
         return (
             <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20">
@@ -699,7 +713,24 @@ export default function MyClassesPage() {
                                                     </h3>
                                                     <p className="text-sm text-gray-500 mb-4">3 CHƯƠNG • 40 BÀI HỌC</p>
 
-                                                    <div className="flex items-center justify-end">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <button
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                try {
+                                                                    await getOrCreateClassGroupRoom(cls.classId);
+                                                                    navigate('/chat');
+                                                                } catch (err) {
+                                                                    toast.error('Không thể mở nhóm chat');
+                                                                }
+                                                            }}
+                                                            className="px-3 py-2 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition flex items-center gap-1.5"
+                                                            title="Mở Nhóm Chat Lớp"
+                                                        >
+                                                            <MessageSquare size={15} />
+                                                            <span>Chat nhóm</span>
+                                                        </button>
+
                                                         {/* Action Button */}
                                                         <button
                                                             onClick={() => handleEnterClassroom(cls)}
@@ -737,45 +768,93 @@ export default function MyClassesPage() {
                         </div>
                     </div>
 
-                    {/* ⭐ 5. Gợi ý lớp học */}
+                    {/* ⭐ 5. Lớp học tại trung tâm */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                            <h2 className="text-2xl font-bold text-gray-900">Gợi ý lớp học</h2>
-                            <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                            <h2 className="text-2xl font-bold text-gray-900">Lớp học tại trung tâm</h2>
+                            <button
+                                onClick={() => navigate('/student/classes')}
+                                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                            >
                                 Xem thêm →
                             </button>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {recommendedCourses.map((course, idx) => (
-                                <div
-                                    key={idx}
-                                    className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 hover:scale-[1.02] cursor-pointer group"
-                                >
-                                    <div className="flex items-start gap-3">
-                                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0 group-hover:scale-110 transition-transform">
-                                            {course.title.substring(0, 1)}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
-                                                {course.title}
-                                            </h3>
-                                            <p className="text-xs text-gray-500 mb-2">{course.description}</p>
-                                            <div className="flex items-center gap-3 text-xs">
-                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full">
-                                                    <Target className="w-3 h-3" />
-                                                    {course.difficulty}
-                                                </span>
-                                                <span className="inline-flex items-center gap-1 text-gray-600">
-                                                    <Users className="w-3 h-3" />
-                                                    {course.students} học viên
-                                                </span>
+                        {loadingCenterClasses ? (
+                            <div className="flex items-center justify-center py-10">
+                                <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                                <span className="ml-2 text-sm text-gray-500">Đang tải danh sách lớp...</span>
+                            </div>
+                        ) : centerClasses.length === 0 ? (
+                            <div className="text-center py-10 bg-white rounded-xl border border-gray-100 shadow-sm">
+                                <GraduationCap className="h-10 w-10 text-gray-300 mx-auto mb-2" />
+                                <p className="text-sm text-gray-500">Hiện chưa có lớp học nào khác tại trung tâm</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {centerClasses.map((cls) => {
+                                    const statusMap: Record<string, { label: string; color: string }> = {
+                                        ONGOING:   { label: 'Đang học', color: 'bg-green-50 text-green-700 border-green-200' },
+                                        PLANNED:   { label: 'Sắp khai giảng', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+                                        FINISHED:  { label: 'Đã kết thúc', color: 'bg-gray-50 text-gray-600 border-gray-200' },
+                                        CANCELLED: { label: 'Đã hủy', color: 'bg-red-50 text-red-600 border-red-200' },
+                                    };
+                                    const statusInfo = statusMap[cls.status] ?? { label: cls.status, color: 'bg-gray-50 text-gray-600 border-gray-200' };
+                                    const studyDayLabels: Record<string, string> = {
+                                        MONDAY:'T2', TUESDAY:'T3', WEDNESDAY:'T4',
+                                        THURSDAY:'T5', FRIDAY:'T6', SATURDAY:'T7', SUNDAY:'CN'
+                                    };
+                                    const studyTimeLabels: Record<string, string> = {
+                                        MORNING:'08:00-11:00', AFTERNOON:'14:00-17:00', EVENING:'18:00-21:00'
+                                    };
+                                    return (
+                                        <div
+                                            key={cls.classId}
+                                            className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 hover:scale-[1.02] cursor-pointer group"
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0 group-hover:scale-110 transition-transform">
+                                                    {cls.name.charAt(0).toUpperCase()}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h3 className="font-semibold text-gray-900 mb-0.5 group-hover:text-blue-600 transition-colors truncate">
+                                                        {cls.name}
+                                                    </h3>
+                                                    <p className="text-xs text-gray-500 mb-2 truncate">{cls.programName}</p>
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        {/* Status badge */}
+                                                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${statusInfo.color}`}>
+                                                            {statusInfo.label}
+                                                        </span>
+                                                        {/* Study days */}
+                                                        {cls.studyDays && cls.studyDays.length > 0 && (
+                                                            <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+                                                                <Calendar className="w-3 h-3" />
+                                                                {cls.studyDays.map(d => studyDayLabels[d] ?? d).join(', ')}
+                                                            </span>
+                                                        )}
+                                                        {/* Study time */}
+                                                        {cls.studyTime && (
+                                                            <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+                                                                <Clock className="w-3 h-3" />
+                                                                {studyTimeLabels[cls.studyTime] ?? cls.studyTime}
+                                                            </span>
+                                                        )}
+                                                        {/* Room */}
+                                                        {cls.room && (
+                                                            <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+                                                                <BookOpen className="w-3 h-3" />
+                                                                {cls.room}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
 
                     {/* ⭐ 7. Footer */}

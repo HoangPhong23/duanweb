@@ -62,7 +62,7 @@ public class GlobalExceptionHandler {
 
     // Xử lý AuthenticationException và AccessDeniedException (403)
     @ExceptionHandler({ AuthenticationException.class, AccessDeniedException.class })
-    public ResponseEntity<ApiError> handleAuthentication(AuthenticationException ex, WebRequest req) {
+    public ResponseEntity<ApiError> handleAuthentication(Exception ex, WebRequest req) {
         return build(HttpStatus.FORBIDDEN, "Bạn không có quyền thực hiện hành động này.", req);
     }
 

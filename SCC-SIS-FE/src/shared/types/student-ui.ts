@@ -16,6 +16,8 @@ export type StudentUI = {
     gender?: string | null;
     nationalIdNo?: string | null;
     
+    rawStudentId?: number;
+    userId?: number;
     // Thay đổi: enrollments thay vì classes
     enrollments: StudentEnrollment[];
 };

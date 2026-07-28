@@ -35,7 +35,7 @@ public class CenterController {
     // ===== Quản trị (dev1 giữ nguyên) =====
     // Active-full
     @GetMapping
-    @PreAuthorize("@authz.isSuperAdmin(authentication)")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<CenterResponse>> getAllActiveCenters() {
         return ResponseEntity.ok(centerService.getAllActiveCenters());
     }

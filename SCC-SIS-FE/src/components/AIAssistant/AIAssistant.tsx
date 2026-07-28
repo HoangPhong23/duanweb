@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, Trash2, Loader2, Bot, User, Maximize2, MessageSquare, Paperclip, Upload, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { createChatSession, getChatSessionDetails, sendChatMessage, deleteChatSession, type ChatMessageResponse } from '@/shared/api/chat';
+import { createChatSession, getChatSessionDetails, sendChatMessage, deleteChatSession, type ChatMessageResponse } from '@/shared/api/ai-chat';
 import { 
     uploadKnowledgeDocument, 
     getAllKnowledgeDocuments, 
@@ -119,12 +119,13 @@ export default function AIAssistant({ className = '' }: AIAssistantProps) {
         }
     };
 
-    const handleSendMessage = async () => {
-        if (!inputValue.trim() || isLoading || !currentSessionId) {
+    const handleSendMessage = async (directText?: string) => {
+        const textToSend = directText ?? inputValue;
+        if (!textToSend.trim() || isLoading || !currentSessionId) {
             return;
         }
 
-        const userMessage = inputValue.trim();
+        const userMessage = textToSend.trim();
         setInputValue('');
 
         const newUserMessage: AIChatMessage = {
@@ -457,10 +458,117 @@ export default function AIAssistant({ className = '' }: AIAssistantProps) {
                                 <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
                             </div>
                         ) : messages.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-full text-center px-4">
-                                <Bot className="h-16 w-16 text-blue-600 mb-4" />
-                                <h4 className="text-lg font-semibold text-gray-900 mb-2">Xin chào!</h4>
-                                <p className="text-sm text-gray-600">Tôi có thể giúp gì cho bạn?</p>
+                            <div className="flex flex-col h-full text-center px-3 py-4 overflow-y-auto">
+                                {/* Greeting */}
+                                <div className="flex flex-col items-center mb-4">
+                                    <div className="relative mb-3">
+                                        <div className="h-14 w-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg">
+                                            <Bot className="h-8 w-8 text-white" />
+                                        </div>
+                                        <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-green-400 border-2 border-white" />
+                                    </div>
+                                    <h4 className="text-base font-bold text-gray-900">
+                                        Xin chào, {profile?.fullName?.split(' ').slice(-1)[0] || 'bạn'}! 👋
+                                    </h4>
+                                    <p className="text-xs text-gray-500 mt-1">Tôi có thể giúp gì cho bạn hôm nay?</p>
+                                </div>
+
+                                {/* Suggested Questions - Student */}
+                                {profile?.roles?.some(r => r.code === 'STUDENT') && (
+                                    <div className="space-y-2 text-left w-full">
+                                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                            <span className="text-base">🎓</span> Học tập cá nhân
+                                        </p>
+                                        {[
+                                            { icon: '📅', text: 'Lịch học tuần này của tôi như thế nào?' },
+                                            { icon: '📊', text: 'Tỷ lệ điểm danh hiện tại của tôi là bao nhiêu?' },
+                                            { icon: '📝', text: 'Tôi còn bao nhiêu buổi trước kỳ thi?' },
+                                            { icon: '🏆', text: 'Điểm số các môn học của tôi ra sao?' },
+                                            { icon: '⚠️', text: 'Tôi có nguy cơ bị cấm thi không?' },
+                                        ].map((q, i) => (
+                                            <button
+                                                key={i}
+                                                onClick={() => handleSendMessage(q.text)}
+                                                className="w-full text-left flex items-start gap-2.5 px-3 py-2.5 rounded-xl border border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 group shadow-sm"
+                                            >
+                                                <span className="text-base flex-shrink-0 mt-0.5">{q.icon}</span>
+                                                <span className="text-xs text-gray-700 group-hover:text-blue-700 font-medium leading-relaxed">{q.text}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Suggested Questions - Lecturer */}
+                                {profile?.roles?.some(r => r.code === 'LECTURER') && (
+                                    <div className="space-y-2 text-left w-full">
+                                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                            <span className="text-base">👨‍🏫</span> Quản lý lớp học
+                                        </p>
+                                        {[
+                                            { icon: '📋', text: 'Tôi đang dạy những lớp nào?' },
+                                            { icon: '📊', text: 'Thống kê điểm danh hôm nay của các lớp tôi?' },
+                                            { icon: '⚠️', text: 'Học viên nào đang có nguy cơ cấm thi?' },
+                                            { icon: '📈', text: 'Thống kê chuyên cần tổng quan các lớp tôi?' },
+                                            { icon: '✍️', text: 'Soạn thông báo nhắc học viên vắng nhiều' },
+                                        ].map((q, i) => (
+                                            <button
+                                                key={i}
+                                                onClick={() => handleSendMessage(q.text)}
+                                                className="w-full text-left flex items-start gap-2.5 px-3 py-2.5 rounded-xl border border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 group shadow-sm"
+                                            >
+                                                <span className="text-base flex-shrink-0 mt-0.5">{q.icon}</span>
+                                                <span className="text-xs text-gray-700 group-hover:text-blue-700 font-medium leading-relaxed">{q.text}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Suggested Questions - Admin / Academic Staff */}
+                                {profile?.roles?.some(r => ['SUPER_ADMIN', 'ACADEMIC_STAFF', 'CENTER_MANAGER'].includes(r.code)) && (
+                                    <div className="space-y-2 text-left w-full">
+                                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                            <span className="text-base">🏢</span> Quản trị & Báo cáo
+                                        </p>
+                                        {[
+                                            { icon: '📊', text: 'Thống kê tổng quan hệ thống hiện tại?' },
+                                            { icon: '🏫', text: 'Tình trạng các lớp học đang hoạt động?' },
+                                            { icon: '📈', text: 'Thống kê điểm danh toàn bộ hôm nay?' },
+                                            { icon: '⚠️', text: 'Lớp nào có tỷ lệ vắng cao nhất?' },
+                                            { icon: '👥', text: 'Thống kê ghi danh theo chương trình?' },
+                                        ].map((q, i) => (
+                                            <button
+                                                key={i}
+                                                onClick={() => handleSendMessage(q.text)}
+                                                className="w-full text-left flex items-start gap-2.5 px-3 py-2.5 rounded-xl border border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 group shadow-sm"
+                                            >
+                                                <span className="text-base flex-shrink-0 mt-0.5">{q.icon}</span>
+                                                <span className="text-xs text-gray-700 group-hover:text-blue-700 font-medium leading-relaxed">{q.text}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Trợ lý trung tâm - All roles */}
+                                <div className="space-y-2 text-left w-full mt-4">
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                        <span className="text-base">🏢</span> Thông tin trung tâm
+                                    </p>
+                                    {[
+                                        { icon: '📋', text: 'Quy định về điểm danh và chuyên cần?' },
+                                        { icon: '💰', text: 'Chính sách học phí và hoàn phí như thế nào?' },
+                                        { icon: '📞', text: 'Liên hệ hỗ trợ khi gặp vấn đề?' },
+                                        { icon: '📚', text: 'Trung tâm có những chương trình đào tạo nào?' },
+                                    ].map((q, i) => (
+                                        <button
+                                            key={i}
+                                            onClick={() => handleSendMessage(q.text)}
+                                            className="w-full text-left flex items-start gap-2.5 px-3 py-2.5 rounded-xl border border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 group shadow-sm"
+                                        >
+                                            <span className="text-base flex-shrink-0 mt-0.5">{q.icon}</span>
+                                            <span className="text-xs text-gray-700 group-hover:text-blue-700 font-medium leading-relaxed">{q.text}</span>
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         ) : (
                             <>

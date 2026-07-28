@@ -1,82 +1,72 @@
-// Real Chat API - Non-streaming version
-import api from './http';
+import http from './http';
 
-export interface ChatSessionDTO {
-    sessionId: number;
-    userId: number;
-    title: string;
-    context: Record<string, any>;
+export type ChatRoomType = 'DIRECT' | 'CLASS_GROUP';
+export type MessageType = 'TEXT' | 'IMAGE' | 'FILE';
+
+export interface ChatRoom {
+    roomId: number;
+    roomType: ChatRoomType;
+    classId?: number;
+    roomName: string;
+    avatarUrl?: string;
+    lastMessage?: string;
+    lastMessageTime?: string;
+    unreadCount: number;
+    partnerUserId?: number;
+}
+
+export interface ChatMessage {
+    messageId: number;
+    roomId: number;
+    senderId: number;
+    senderName: string;
+    senderAvatar?: string;
+    messageType: MessageType;
+    content?: string;
+    attachmentUrl?: string;
+    fileName?: string;
+    fileSize?: number;
     createdAt: string;
-    updatedAt: string;
 }
 
-export interface ChatMessageResponse {
-    messageId?: number;
-    sessionId: number;
-    role?: 'user' | 'assistant';
-    message: string; // Backend uses 'message', not 'content'
-    sources?: MessageSource[];
-    completionMs?: number;
-    timestamp: string; // Backend uses 'timestamp', not 'createdAt'
+export interface SendMessagePayload {
+    roomId: number;
+    messageType?: MessageType;
+    content?: string;
+    attachmentUrl?: string;
+    fileName?: string;
+    fileSize?: number;
 }
 
-export interface MessageSource {
-    docId: number;
-    chunkIndex: number;
-    title: string;
-    similarity: number;
-    excerpt: string;
-}
+// 1. Lấy danh sách phòng chat
+export const getUserChatRooms = () =>
+    http.get<ChatRoom[]>('/api/chat/rooms');
 
-export interface ChatRequest {
-    message: string;
-}
+// 2. Tạo/Mở phòng chat 1-1 với user khác
+export const getOrCreateDirectRoom = (partnerUserId: number) =>
+    http.post<ChatRoom>('/api/chat/direct', { partnerUserId });
 
-export interface ChatSessionDetailsResponse {
-    session: ChatSessionDTO;
-    messages: ChatMessageResponse[];
-}
+// 3. Mở/Tạo nhóm chat lớp
+export const getOrCreateClassGroupRoom = (classId: number) =>
+    http.post<ChatRoom>(`/api/chat/class-group/${classId}`);
 
-/**
- * Create new chat session
- */
-export const createChatSession = async (title?: string): Promise<ChatSessionDTO> => {
-    const response = await api.post<ChatSessionDTO>('/api/chat/sessions', {
-        title: title || 'Hỏi đáp mới',
+// 4. Lấy danh sách tin nhắn của phòng
+export const getRoomMessages = (roomId: number) =>
+    http.get<ChatMessage[]>(`/api/chat/rooms/${roomId}/messages`);
+
+// 5. Gửi tin nhắn qua REST API
+export const sendMessageApi = (data: SendMessagePayload) =>
+    http.post<ChatMessage>('/api/chat/messages', data);
+
+// 6. Upload file/ảnh đính kèm
+export const uploadChatAttachment = (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return http.post<{ url: string; fileName: string; fileSize: string }>('/api/chat/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
     });
-    return response.data;
 };
 
-/**
- * Get all chat sessions for current user
- */
-export const getChatSessions = async (): Promise<ChatSessionDTO[]> => {
-    const response = await api.get<ChatSessionDTO[]>('/api/chat/sessions');
-    return response.data;
-};
-
-/**
- * Get session details with messages
- */
-export const getChatSessionDetails = async (sessionId: number): Promise<ChatSessionDetailsResponse> => {
-    const response = await api.get<ChatSessionDetailsResponse>(`/api/chat/sessions/${sessionId}`);
-    return response.data;
-};
-
-/**
- * Send message to chat (non-streaming)
- */
-export const sendChatMessage = async (sessionId: number, message: string): Promise<ChatMessageResponse> => {
-    const response = await api.post<ChatMessageResponse>(`/api/chat/sessions/${sessionId}/messages`, {
-        sessionId: sessionId, // Include sessionId in body for backend logging
-        message: message,
-    });
-    return response.data;
-};
-
-/**
- * Delete a chat session
- */
-export const deleteChatSession = async (sessionId: number): Promise<void> => {
-    await api.delete(`/api/chat/sessions/${sessionId}`);
-};
+// 7. Đánh dấu phòng chat đã đọc
+export const markRoomAsRead = (roomId: number) =>
+    http.put(`/api/chat/rooms/${roomId}/read`);

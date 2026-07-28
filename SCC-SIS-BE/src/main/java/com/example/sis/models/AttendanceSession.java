@@ -86,6 +86,16 @@ public class AttendanceSession {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    // ===== Điểm danh bằng mã =====
+    @Column(name = "attendance_code", length = 20)
+    private String attendanceCode;
+
+    @Column(name = "code_enabled", nullable = false)
+    private Boolean codeEnabled = false;
+
+    @Column(name = "code_expires_at")
+    private LocalDateTime codeExpiresAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "deleted_by",
             foreignKey = @ForeignKey(name = "fk_attendance_sessions_deleted_by"))
@@ -102,6 +112,7 @@ public class AttendanceSession {
         if (createdAt == null) createdAt = now;
         if (updatedAt == null) updatedAt = now;
         if (deleted == null) deleted = false;
+        if (codeEnabled == null) codeEnabled = false;
         if (totalStudents == null) totalStudents = 0;
         if (presentCount == null) presentCount = 0;
         if (absentCount == null) absentCount = 0;
@@ -255,6 +266,30 @@ public class AttendanceSession {
 
     public void setRecords(List<AttendanceRecord> records) {
         this.records = records;
+    }
+
+    public String getAttendanceCode() {
+        return attendanceCode;
+    }
+
+    public void setAttendanceCode(String attendanceCode) {
+        this.attendanceCode = attendanceCode;
+    }
+
+    public Boolean getCodeEnabled() {
+        return codeEnabled;
+    }
+
+    public void setCodeEnabled(Boolean codeEnabled) {
+        this.codeEnabled = codeEnabled;
+    }
+
+    public LocalDateTime getCodeExpiresAt() {
+        return codeExpiresAt;
+    }
+
+    public void setCodeExpiresAt(LocalDateTime codeExpiresAt) {
+        this.codeExpiresAt = codeExpiresAt;
     }
 }
 

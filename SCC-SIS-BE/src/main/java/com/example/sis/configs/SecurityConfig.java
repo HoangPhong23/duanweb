@@ -51,6 +51,9 @@ public class SecurityConfig {
                                                 // Actuator health cho Docker healthcheck
                                                 .requestMatchers("/actuator/health").permitAll()
 
+                                                // WebSocket STOMP & SockJS handshake
+                                                .requestMatchers("/ws/**", "/ws-chat/**").permitAll()
+
                                                 // Auth profile
                                                 .requestMatchers("/api/auth/profile").authenticated()
                                                 .requestMatchers("/api/users/profile").authenticated()

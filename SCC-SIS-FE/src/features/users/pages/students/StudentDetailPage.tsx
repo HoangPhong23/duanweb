@@ -12,9 +12,14 @@ import {
     FileText,
     ArrowLeft,
     MapPin,
+    MessageSquare,
+    Loader2,
 } from 'lucide-react';
 import { getStudentWithEnrollmentsById } from '@/shared/api/students';
 import { getStudentGradesByStudentId, type GradeRecordResponse } from '@/shared/api/grade-entries';
+import { getOrCreateDirectRoom } from '@/shared/api/chat';
+import { useToast } from '@/shared/hooks/useToast';
+import { useUserProfile } from '@/stores/userProfile';
 import type { StudentUI } from '@/shared/types/student-ui';
 import type { StudentEnrollment, StudentWithEnrollmentsDto } from '@/shared/types/student';
 import ClassLogTab from '@/features/users/pages/classes/components/journals/ClassLogTab';
@@ -23,8 +28,11 @@ import StudentAttendanceTab from './components/StudentAttendanceTab';
 export default function StudentDetailPage() {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
+    const toast = useToast();
+    const { me } = useUserProfile();
     const [student, setStudent] = useState<StudentUI | null>(null);
     const [loading, setLoading] = useState(true);
+    const [startingChat, setStartingChat] = useState(false);
     const [activeTab, setActiveTab] = useState<'info' | 'classes' | 'attendance' | 'scores' | 'logs'>('info');
     const [selectedClass, setSelectedClass] = useState<any | null>(null);
     const [grades, setGrades] = useState<GradeRecordResponse[]>([]);
@@ -59,6 +67,8 @@ export default function StudentDetailPage() {
         address: dto.addressLine || null,
         gender: dto.gender || null,
         nationalIdNo: dto.nationalIdNo || null,
+        rawStudentId: dto.studentId,
+        userId: dto.userId,
         enrollments: dto.enrollments || [],
     });
 
@@ -199,6 +209,27 @@ export default function StudentDetailPage() {
         { id: 'logs', label: 'Nhật ký', icon: FileText },
     ] as const;
 
+    const handleStartChat = async () => {
+        if (!student?.userId) {
+            toast.error('Học viên này chưa có tài khoản hệ thống để nhắn tin');
+            return;
+        }
+        if (me?.userId && student.userId === me.userId) {
+            toast.error('Bạn không thể tạo cuộc trò chuyện với chính mình');
+            return;
+        }
+        try {
+            setStartingChat(true);
+            await getOrCreateDirectRoom(student.userId);
+            navigate('/chat');
+        } catch (e: any) {
+            const msg = e.response?.data?.message || 'Không thể mở cuộc trò chuyện với học viên này';
+            toast.error(msg);
+        } finally {
+            setStartingChat(false);
+        }
+    };
+
     return (
         <div className="h-screen flex flex-col bg-gray-50">
             {/* Header */}
@@ -214,6 +245,14 @@ export default function StudentDetailPage() {
                         <div className="text-lg font-semibold text-gray-900 truncate">{student.name}</div>
                         <div className="text-sm text-gray-500">{student.studentId}</div>
                     </div>
+                    <button
+                        onClick={handleStartChat}
+                        disabled={startingChat}
+                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold flex items-center gap-2 shadow-xs transition-colors"
+                    >
+                        {startingChat ? <Loader2 size={16} className="animate-spin" /> : <MessageSquare size={16} />}
+                        Nhắn tin
+                    </button>
                 </div>
             </div>
 

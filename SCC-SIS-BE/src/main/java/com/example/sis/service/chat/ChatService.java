@@ -140,8 +140,8 @@ public class ChatService {
         // Build context from sources
         String context = buildContextFromSources(sources);
         
-        // 🔥 NEW: Inject real-time data into context
-        context = realtimeDataFetcher.buildContextWithRealtimeData(userMessage, context);
+        // 🔥 Inject real-time data into context (role-aware)
+        context = realtimeDataFetcher.buildContextWithRealtimeData(userMessage, context, userContext);
         
         // Build conversation history
         String history = buildConversationHistory(conversationHistory);
@@ -153,14 +153,17 @@ public class ChatService {
         log.info("🔍 DEBUG User Context: {}", userContext);
         log.info("📋 DEBUG User Profile:\n{}", userProfile);
         
-        // Build prompt for streaming
+        // Build role-aware system prompt
+        String roleInstruction = buildRoleInstruction(userContext);
+        
         String systemPrompt = """
-            Bạn là trợ lý AI của CodeGym, giúp sinh viên học lập trình.
+            Bạn là trợ lý AI hỗ trợ người dùng trong hệ thống quản lý đào tạo.
+            %s
             
             ⚠️ QUY TẮC BẮT BUỘC (KHÔNG ĐƯỢC VI PHẠM):
             - CHỈ trả lời dựa trên CONTEXT TÀI LIỆU và THÔNG TIN NGƯỜI DÙNG bên dưới
-            - KHÔNG được bịa thêm thông tin không có trong context (ví dụ: tên trung tâm, cổng thanh toán, số tiền)
-            - Nếu context KHÔNG CÓ thông tin, hãy nói "Hiện tại tôi chưa có thông tin này trong tài liệu"
+            - KHÔNG được bịa thêm thông tin không có trong context
+            - Nếu context KHÔNG CÓ thông tin, hãy nói "Hiện tại tôi chưa có thông tin này"
             - KHÔNG được đoán hoặc suy luận thông tin không có trong context
             
             THÔNG TIN NGƯỜI DÙNG:
@@ -171,14 +174,14 @@ public class ChatService {
             
             CÁCH TRẢ LỜI:
             1. Đọc kỹ CONTEXT TÀI LIỆU bên trên trước khi trả lời
-            2. Nếu câu hỏi về thông tin cá nhân ("tôi học lớp nào", "lịch học của tôi"), dùng THÔNG TIN NGƯỜI DÙNG
-            3. Nếu câu hỏi về quy định, học phí, chính sách → dùng CONTEXT TÀI LIỆU
-            4. Trả lời trực tiếp, chi tiết, trích dẫn CHÍNH XÁC từ context (số tiền, phần trăm, tên chính thức)
-            5. TUYỆT ĐỐI không nhắc đến: "Trung tâm Hà Nội 5", "cổng thanh toán SIS", hoặc BẤT KỲ thông tin nào KHÔNG CÓ trong context
+            2. Nếu câu hỏi về thông tin cá nhân → dùng THÔNG TIN NGƯỜI DÙNG
+            3. Nếu câu hỏi về quy định, chính sách → dùng CONTEXT TÀI LIỆU
+            4. Trả lời trực tiếp, chi tiết, trích dẫn CHÍNH XÁC từ context
+            5. TUYỆT ĐỐI không bịa thông tin không có trong context
             
             LỊCH SỬ HỘI THOẠI:
             %s
-            """.formatted(userProfile, context, history);
+            """.formatted(roleInstruction, userProfile, context, history);
         
         String fullPrompt = systemPrompt + "\n\nCÂU HỎI: " + userMessage + "\n\nTRẢ LỜI:";
         
@@ -204,8 +207,8 @@ public class ChatService {
         // Build context from sources
         String context = buildContextFromSources(sources);
         
-        // 🔥 NEW: Inject real-time data into context
-        context = realtimeDataFetcher.buildContextWithRealtimeData(userMessage, context);
+        // 🔥 Inject real-time data into context (role-aware)
+        context = realtimeDataFetcher.buildContextWithRealtimeData(userMessage, context, userContext);
         
         // Build conversation history
         String history = buildConversationHistory(conversationHistory);
@@ -217,9 +220,12 @@ public class ChatService {
         log.info("🔍 DEBUG User Context: {}", userContext);
         log.info("📋 DEBUG User Profile:\n{}", userProfile);
         
-        // Build prompt
+        // Build role-aware system prompt
+        String roleInstruction = buildRoleInstruction(userContext);
+        
         String systemPrompt = """
-            Bạn là trợ lý AI của CodeGym, giúp sinh viên học lập trình.
+            Bạn là trợ lý AI hỗ trợ người dùng trong hệ thống quản lý đào tạo.
+            %s
             
             ⚠️ QUY TẮC BẮT BUỘC (KHÔNG ĐƯỢC VI PHẠM):
             1. ✅ ƯU TIÊN CAO NHẤT: "=== DỮ LIỆU DATABASE REALTIME ==="
@@ -228,7 +234,6 @@ public class ChatService {
             
             2. Ưu tiên thấp hơn: "=== TÀI LIỆU THAM KHẢO ==="
                → CHỈ dùng khi KHÔNG có "DỮ LIỆU DATABASE REALTIME"
-               → Đây là tài liệu cũ, có thể lỗi thời
             
             3. Nếu cả 2 đều không có thông tin → Trả lời: "Hiện tại tôi chưa có thông tin này"
             
@@ -241,15 +246,14 @@ public class ChatService {
             CÁCH TRẢ LỜI:
             - Tìm "=== DỮ LIỆU DATABASE REALTIME ===" trong context
             - Nếu TÌM THẤY:
-              1. Tìm dòng "📅 NGÀY HÔM NAY: YYYY-MM-DD" → Đây là ngày hôm nay CHÍNH XÁC
-              2. Dùng SỐ LIỆU đã tính sẵn (VD: "45 ngày"), TUYỆT ĐỐI KHÔNG tự tính lại
-              3. Khi trả lời phải nói rõ "tính từ hôm nay (ngày YYYY-MM-DD)"
+              1. Dùng SỐ LIỆU đã tính sẵn, TUYỆT ĐỐI KHÔNG tự tính lại
+              2. Khi trả lời phải trình bày rõ ràng, có bảng/danh sách nếu phù hợp
             - Nếu KHÔNG TÌM THẤY → Dùng "=== TÀI LIỆU THAM KHẢO ==="
-            - ⚠️ NGHIÊM CẤM: Không được tự nghĩ ngày hôm nay, phải dùng ngày trong section REALTIME
+            - ⚠️ NGHIÊM CẤM: Không được bịa dữ liệu không có trong context
             
             LỊCH SỬ HỘI THOẠI:
             %s
-            """.formatted(userProfile, context, history);
+            """.formatted(roleInstruction, userProfile, context, history);
         
         String fullPrompt = systemPrompt + "\n\nCÂU HỎI: " + userMessage + "\n\nTRẢ LỜI:";
         
@@ -437,6 +441,53 @@ public class ChatService {
             profile.append("- Vai trò trong hệ thống: ").append(userContext.get("roles")).append("\n");
         }
         
+        // Lecturer-specific info
+        if (Boolean.TRUE.equals(userContext.get("isLecturer"))) {
+            profile.append("- Vai trò: GIẢNG VIÊN\n");
+        }
+        
         return profile.toString();
+    }
+    
+    /**
+     * Build role-specific instruction for system prompt
+     */
+    private String buildRoleInstruction(Map<String, Object> userContext) {
+        if (userContext == null) return "";
+        
+        if (Boolean.TRUE.equals(userContext.get("isLecturer"))) {
+            return """
+                Người dùng hiện tại là GIẢNG VIÊN. Bạn hỗ trợ giảng viên:
+                - Xem thông tin lớp học đang phụ trách
+                - Xem tình hình điểm danh hôm nay của từng lớp
+                - Xem học viên có nguy cơ bị cấm thi (vắng > 25%%)
+                - Thống kê chuyên cần tổng quan các lớp
+                - Soạn thông báo nhắc nhở học viên
+                Hãy trả lời chuyên nghiệp, trình bày số liệu rõ ràng, có bảng nếu cần.
+                """;
+        }
+        
+        Object roles = userContext.get("roles");
+        if (roles != null) {
+            String rolesStr = roles.toString().toUpperCase();
+            if (rolesStr.contains("SUPER_ADMIN") || rolesStr.contains("ACADEMIC_STAFF") || rolesStr.contains("CENTER_MANAGER")) {
+                return """
+                    Người dùng hiện tại là QUẢN TRỊ VIÊN. Bạn hỗ trợ quản trị viên:
+                    - Xem thống kê tổng quan hệ thống
+                    - Báo cáo lớp học, học viên, giảng viên
+                    - Phát hiện vấn đề cần chú ý
+                    Hãy trả lời chuyên nghiệp với số liệu cụ thể.
+                    """;
+            }
+        }
+        
+        // Default: Student
+        return """
+            Người dùng hiện tại là HỌC VIÊN. Bạn hỗ trợ học viên:
+            - Xem lịch học, điểm danh, điểm số
+            - Tra cứu quy định, chính sách của trung tâm
+            - Kiểm tra tình trạng học tập cá nhân
+            Hãy trả lời thân thiện và dễ hiểu.
+            """;
     }
 }

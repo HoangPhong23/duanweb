@@ -137,4 +137,37 @@ export interface StudentAttendanceHistory {
 export const getStudentAttendanceHistory = (studentId: number, classId: number) =>
     http.get<StudentAttendanceHistory>(`/api/students/${studentId}/classes/${classId}/attendance`);
 
+// ===== ĐIỂM DANH BẰNG MÃ =====
 
+export interface SetAttendanceCodeRequest {
+    attendanceCode: string;
+    codeEnabled: boolean;
+    expiresMinutes?: number;
+}
+
+export interface SetAttendanceCodeResponse {
+    sessionId: number;
+    attendanceCode: string;
+    codeEnabled: boolean;
+    codeExpiresAt?: string;
+    message: string;
+}
+
+export interface SubmitAttendanceCodeRequest {
+    classId: number;
+    attendanceCode: string;
+}
+
+/**
+ * 8. Giảng viên set mã điểm danh cho một buổi
+ * POST /api/attendance-sessions/{sessionId}/code
+ */
+export const setAttendanceCode = (sessionId: number, data: SetAttendanceCodeRequest) =>
+    http.post<SetAttendanceCodeResponse>(`/api/attendance-sessions/${sessionId}/code`, data);
+
+/**
+ * 9. Học viên submit mã để tự điểm danh
+ * POST /api/attendance/submit-code
+ */
+export const submitAttendanceCode = (data: SubmitAttendanceCodeRequest) =>
+    http.post('/api/attendance/submit-code', data);

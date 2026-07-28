@@ -3,13 +3,9 @@
  * Maps categoryCode (backend) to display label (frontend)
  */
 export const PROGRAM_CATEGORIES = {
-    TECHNICAL: 'Kỹ thuật',
-    PROGRAMMING: 'Lập trình',
-    DESIGN: 'Thiết kế',
-    BUSINESS: 'Kinh doanh',
-    WEB: 'Web',
-    MOBILE: 'Di động',
-    DATABASE: 'Cơ sở dữ liệu',
+    IELTS: 'Lớp IELTS',
+    TOEIC: 'Lớp TOEIC',
+    ENGLISH_BASIC: 'Lớp Tiếng Anh Cơ Bản',
     OTHER: 'Khác',
 } as const;
 
@@ -34,9 +30,7 @@ export const getCategoryOptions = () => {
  * Main categories for program creation form
  */
 export const MAIN_CATEGORIES = [
-    { value: 'TECHNICAL', label: 'Kỹ thuật' },
-    { value: 'PROGRAMMING', label: 'Lập trình' },
-    { value: 'DESIGN', label: 'Thiết kế' },
-    { value: 'BUSINESS', label: 'Kinh doanh' },
+    { value: 'IELTS', label: 'Lớp IELTS' },
+    { value: 'TOEIC', label: 'Lớp TOEIC' },
+    { value: 'ENGLISH_BASIC', label: 'Lớp Tiếng Anh Cơ Bản' },
 ] as const;
-

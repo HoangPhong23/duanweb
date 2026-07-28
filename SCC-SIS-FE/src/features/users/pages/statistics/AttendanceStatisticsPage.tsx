@@ -207,10 +207,10 @@ export default function AttendanceStatisticsPage() {
 
             {/* Filters */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="flex flex-col lg:flex-row lg:items-end gap-4 w-full">
                     {/* Center selection (Admin only) */}
                     {isAdmin && (
-                        <div>
+                        <div className="w-full lg:w-56 flex-shrink-0">
                             <label className="block text-sm font-medium text-gray-700 mb-2">Trung tâm</label>
                             <select
                                 value={selectedCenter}
@@ -219,7 +219,7 @@ export default function AttendanceStatisticsPage() {
                                     setSelectedCenter(value ? Number(value) : '');
                                     setSelectedClass(''); // Reset class selection
                                 }}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                             >
                                 <option value="">Tất cả trung tâm</option>
                                 {centers.map((center) => (
@@ -231,13 +231,13 @@ export default function AttendanceStatisticsPage() {
                         </div>
                     )}
 
-                    {/* Class selection */}
-                    <div>
+                    {/* Class selection (Auto-expanding to fill space) */}
+                    <div className="flex-1 min-w-0">
                         <label className="block text-sm font-medium text-gray-700 mb-2">Lớp học</label>
                         <select
                             value={selectedClass}
                             onChange={(e) => setSelectedClass(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm truncate"
                             disabled={classes.length === 0}
                         >
                             {classes.length === 0 ? (
@@ -257,12 +257,12 @@ export default function AttendanceStatisticsPage() {
 
                     {/* Month selection (only for daily view) */}
                     {viewType === 'daily' && (
-                        <div>
+                        <div className="w-full lg:w-36 flex-shrink-0">
                             <label className="block text-sm font-medium text-gray-700 mb-2">Tháng</label>
                             <select
                                 value={selectedMonth}
                                 onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                             >
                                 {months.map((month) => (
                                     <option key={month.value} value={month.value}>
@@ -274,12 +274,12 @@ export default function AttendanceStatisticsPage() {
                     )}
 
                     {/* Year selection */}
-                    <div>
+                    <div className="w-full lg:w-36 flex-shrink-0">
                         <label className="block text-sm font-medium text-gray-700 mb-2">Năm</label>
                         <select
                             value={selectedYear}
                             onChange={(e) => setSelectedYear(Number(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                         >
                             {years.map((year) => (
                                 <option key={year} value={year}>
@@ -290,12 +290,12 @@ export default function AttendanceStatisticsPage() {
                     </div>
 
                     {/* View type */}
-                    <div>
+                    <div className="w-full lg:w-56 flex-shrink-0">
                         <label className="block text-sm font-medium text-gray-700 mb-2">Hiển thị theo</label>
                         <div className="flex gap-2">
                             <button
                                 onClick={() => setViewType('daily')}
-                                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                                className={`flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-colors ${
                                     viewType === 'daily'
                                         ? 'bg-blue-600 text-white'
                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -305,7 +305,7 @@ export default function AttendanceStatisticsPage() {
                             </button>
                             <button
                                 onClick={() => setViewType('monthly')}
-                                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                                className={`flex-1 px-3 py-2 text-sm rounded-lg font-medium transition-colors ${
                                     viewType === 'monthly'
                                         ? 'bg-blue-600 text-white'
                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'

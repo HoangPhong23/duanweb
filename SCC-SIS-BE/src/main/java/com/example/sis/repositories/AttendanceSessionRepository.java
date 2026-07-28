@@ -64,5 +64,21 @@ public interface AttendanceSessionRepository extends JpaRepository<AttendanceSes
      */
     List<AttendanceSession> findByClassEntity_ClassIdAndAttendanceDateBetweenAndDeletedFalse(
             Integer classId, LocalDate fromDate, LocalDate toDate);
+
+    /**
+     * Tìm buổi điểm danh đang bật mã của một lớp trong ngày hôm nay
+     * Dùng khi học viên submit mã
+     */
+    @Query("""
+        SELECT s FROM AttendanceSession s
+        WHERE s.classEntity.classId = :classId
+        AND s.attendanceDate = :today
+        AND s.codeEnabled = true
+        AND s.deleted = false
+        ORDER BY s.sessionId DESC
+        """)
+    Optional<AttendanceSession> findActiveCodeSessionByClassAndDate(
+            @Param("classId") Integer classId,
+            @Param("today") LocalDate today);
 }
 

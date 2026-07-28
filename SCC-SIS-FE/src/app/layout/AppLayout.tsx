@@ -137,9 +137,15 @@ function AppLayout({ children }: AppLayoutProps) {
                         },
                         {
                             id: 'statistics',
-                            label: 'Thống kê Điểm danh',
+                            label: 'Thống kê',
                             path: '/statistics',
                             icon: BarChart3,
+                        },
+                        {
+                            id: 'chat',
+                            label: 'Tin nhắn',
+                            path: '/chat',
+                            icon: MessageSquare,
                         },
                     ]
                   : [

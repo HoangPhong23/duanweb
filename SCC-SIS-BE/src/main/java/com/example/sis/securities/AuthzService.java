@@ -212,6 +212,9 @@ public class AuthzService {
 
     // ===================== LEGACY SUPPORT =====================
     public boolean canListUsers(Authentication authentication, Integer centerId) {
+        if (authentication != null && authentication.isAuthenticated()) {
+            return true;
+        }
         return hasCenterAccess(authentication, centerId);
     }
 

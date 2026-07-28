@@ -732,10 +732,6 @@ export default function ClassesPage() {
                         newErrors.schedule = 'Vui lòng chọn đầy đủ ngày và giờ học';
                     }
 
-                    // Validate: Tối đa 2 ngày học
-                    if (selectedDays.length > 2) {
-                        newErrors.schedule = 'Chỉ được chọn tối đa 2 ngày học trong tuần';
-                    }
 
                     // Validate study days based on start/end date (only if < 7 days)
                     // Khi edit: lấy startDate và endDate từ editing object
@@ -1071,7 +1067,7 @@ export default function ClassesPage() {
                                 )}
                             </div>
                             <div>
-                                <label className="block text-xs text-gray-600 mb-1">Ngày học * (tối đa 2 ngày)</label>
+                                <label className="block text-xs text-gray-600 mb-1">Ngày học *</label>
                                 <MultiSelect
                                     options={dayOptions}
                                     selectedValues={selectedDays}
@@ -1079,7 +1075,6 @@ export default function ClassesPage() {
                                     placeholder="Chọn ngày học"
                                     name="scheduleDays"
                                     error={errors.schedule}
-                                    maxSelection={2}
                                 />
                             </div>
                             <div>

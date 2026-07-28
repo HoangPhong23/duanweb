@@ -36,7 +36,7 @@ public class CreateClassRequest {
     @Positive(message = "Sức chứa phải là số dương")
     private Integer capacity;
 
-    // Ngày học trong tuần (tối đa 2 ngày)
+    // Ngày học trong tuần
     private List<StudyDay> studyDays;
 
     // Ca học

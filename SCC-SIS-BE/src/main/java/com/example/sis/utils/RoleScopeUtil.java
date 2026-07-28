@@ -14,7 +14,9 @@ public final class RoleScopeUtil {
     public static boolean isCenterScoped(String code) {
         return "CENTER_MANAGER".equals(code)
                 || "ACADEMIC_STAFF".equals(code)
-                || "LECTURER".equals(code);
+                || "LECTURER".equals(code)
+                || "STUDENT".equals(code)
+                || (code != null && code.startsWith("LECTURER_"));
     }
 
     // nếu sau này muốn dùng enum RoleScope

@@ -197,9 +197,33 @@ public class SecurityContextResolver {
             log.warn("⚠️ Failed to fetch student info for userId={}: {}", userId, e.getMessage());
         }
         
+        // ✅ Lecturer: Set context flags so RealtimeDataFetcher can fetch class data
+        try {
+            if (hasRole("LECTURER")) {
+                context.put("lecturerUserId", userId);
+                context.put("isLecturer", true);
+                log.info("👨‍🏫 Lecturer context set for userId={}", userId);
+            }
+        } catch (Exception e) {
+            log.warn("⚠️ Failed to set lecturer context for userId={}: {}", userId, e.getMessage());
+        }
+
+        // ✅ Admin / Academic Staff: Set context flags
+        try {
+            Set<String> roles = getCurrentUserRoles();
+            if (roles.contains("SUPER_ADMIN") || roles.contains("ADMIN") || roles.contains("CENTER_MANAGER") || roles.contains("ACADEMIC_STAFF")) {
+                context.put("isAdmin", true);
+                log.info("🏢 Admin/Academic Staff context set for userId={}", userId);
+            }
+        } catch (Exception e) {
+            log.warn("⚠️ Failed to set admin context for userId={}: {}", userId, e.getMessage());
+        }
+
         // Set scope based on roles (fallback if not already set)
         if (context.get("scope") == null) {
-            if (isTeacher()) {
+            if (hasRole("LECTURER")) {
+                context.put("scope", "LECTURER");
+            } else if (isTeacher()) {
                 context.put("scope", "TEACHER");
             } else if (isAdmin()) {
                 context.put("scope", "ALL");

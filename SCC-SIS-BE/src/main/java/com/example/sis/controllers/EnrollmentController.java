@@ -27,11 +27,14 @@ public class EnrollmentController {
 
     private final EnrollmentService enrollmentService;
     private final UserRoleRepository userRoleRepo;
+    private final com.example.sis.repositories.ClassRepository classRepo;
 
     public EnrollmentController(EnrollmentService enrollmentService,
-                                UserRoleRepository userRoleRepo) {
+                                UserRoleRepository userRoleRepo,
+                                com.example.sis.repositories.ClassRepository classRepo) {
         this.enrollmentService = enrollmentService;
         this.userRoleRepo = userRoleRepo;
+        this.classRepo = classRepo;
     }
 
     // ===== List + Filter (cho phép Lecturer xem) =====
@@ -46,9 +49,9 @@ public class EnrollmentController {
         return ResponseEntity.ok(enrollmentService.list(classId, status, page, size, sort));
     }
 
-    // ===== Enroll (idempotent) =====
+    // ===== Enroll (chỉ dành cho SuperAdmin / Academic Staff / Center Manager) =====
     @PostMapping
-    @PreAuthorize("@authz.isSuperAdmin(authentication) or @authz.hasAcademicAccessForClass(authentication, #classId)")
+    @PreAuthorize("@authz.isSuperAdmin(authentication) or @authz.canManageClasses(authentication, @classRepo.findCenterIdByClassId(#classId))")
     public ResponseEntity<EnrollmentResponse> enroll(
             @PathVariable Integer classId,
             @Valid @RequestBody EnrollmentRequest request,
@@ -57,9 +60,9 @@ public class EnrollmentController {
         return ResponseEntity.ok(enrollmentService.enroll(classId, request, userId));
     }
 
-    // ===== Update trạng thái/leftAt =====
+    // ===== Update trạng thái (chỉ dành cho SuperAdmin / Academic Staff / Center Manager) =====
     @PatchMapping("/{enrollmentId}")
-    @PreAuthorize("@authz.isSuperAdmin(authentication) or @authz.hasAcademicAccessForClass(authentication, #classId)")
+    @PreAuthorize("@authz.isSuperAdmin(authentication) or @authz.canManageClasses(authentication, @classRepo.findCenterIdByClassId(#classId))")
     public ResponseEntity<EnrollmentResponse> update(
             @PathVariable Integer classId,
             @PathVariable Integer enrollmentId,
@@ -69,9 +72,9 @@ public class EnrollmentController {
         return ResponseEntity.ok(enrollmentService.update(classId, enrollmentId, request, userId));
     }
 
-    // ===== Soft remove (DROPPED + leftAt + revokedBy/At + note) =====
+    // ===== Soft remove (chỉ dành cho SuperAdmin / Academic Staff / Center Manager) =====
     @DeleteMapping("/{enrollmentId}")
-    @PreAuthorize("@authz.isSuperAdmin(authentication) or @authz.hasAcademicAccessForClass(authentication, #classId)")
+    @PreAuthorize("@authz.isSuperAdmin(authentication) or @authz.canManageClasses(authentication, @classRepo.findCenterIdByClassId(#classId))")
     public ResponseEntity<Void> remove(
             @PathVariable Integer classId,
             @PathVariable Integer enrollmentId,

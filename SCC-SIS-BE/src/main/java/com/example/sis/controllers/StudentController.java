@@ -130,7 +130,7 @@ public class StudentController {
      * - Academic Staff: xem chi tiết
      */
     @GetMapping("/{id}")
-    @PreAuthorize("@authz.isSuperAdmin(authentication) or @authz.hasRole(authentication, 'ACADEMIC_STAFF')")
+    @PreAuthorize("@authz.isSuperAdmin(authentication) or @authz.hasRole(authentication, 'ACADEMIC_STAFF') or @authz.hasRole(authentication, 'LECTURER')")
     public ResponseEntity<StudentResponse> getStudentById(@PathVariable Integer id) {
         try {
             StudentResponse student = studentService.getStudentById(id);
@@ -187,7 +187,7 @@ public class StudentController {
      * - Academic Staff: có thể tìm kiếm
      */
     @GetMapping("/search")
-    @PreAuthorize("@authz.isSuperAdmin(authentication) or @authz.hasRole(authentication, 'ACADEMIC_STAFF')")
+    @PreAuthorize("@authz.isSuperAdmin(authentication) or @authz.hasRole(authentication, 'ACADEMIC_STAFF') or @authz.hasRole(authentication, 'LECTURER')")
     public ResponseEntity<List<StudentResponse>> searchStudents(
             @RequestParam(required = false) String keyword) {
         List<StudentResponse> students = studentService.searchStudents(keyword);
@@ -249,7 +249,7 @@ public class StudentController {
      * - Academic Staff: có thể xem
      */
     @GetMapping("/{id}/enrollments")
-    @PreAuthorize("@authz.isSuperAdmin(authentication) or @authz.hasRole(authentication, 'ACADEMIC_STAFF')")
+    @PreAuthorize("@authz.isSuperAdmin(authentication) or @authz.hasRole(authentication, 'ACADEMIC_STAFF') or @authz.hasRole(authentication, 'LECTURER')")
     public ResponseEntity<StudentWithEnrollmentsResponse> getStudentWithEnrollments(@PathVariable Integer id) {
         try {
             StudentWithEnrollmentsResponse response = studentService.getStudentWithEnrollmentsById(id);
@@ -265,7 +265,7 @@ public class StudentController {
      * - Academic Staff: có thể xem
      */
     @GetMapping("/with-enrollments")
-    @PreAuthorize("@authz.isSuperAdmin(authentication) or @authz.hasRole(authentication, 'ACADEMIC_STAFF')")
+    @PreAuthorize("@authz.isSuperAdmin(authentication) or @authz.hasRole(authentication, 'ACADEMIC_STAFF') or @authz.hasRole(authentication, 'LECTURER')")
     public ResponseEntity<List<StudentWithEnrollmentsResponse>> getAllStudentsWithEnrollments() {
         List<StudentWithEnrollmentsResponse> students = studentService.getAllStudentsWithEnrollments();
         return ResponseEntity.ok(students);
@@ -278,7 +278,7 @@ public class StudentController {
      * - Teacher: xem tất cả
      */
     @GetMapping("/warnings")
-    @PreAuthorize("@authz.isSuperAdmin(authentication) or @authz.hasRole(authentication, 'ACADEMIC_STAFF') or @authz.hasRole(authentication, 'TEACHER')")
+    @PreAuthorize("@authz.isSuperAdmin(authentication) or @authz.hasRole(authentication, 'ACADEMIC_STAFF') or @authz.hasRole(authentication, 'TEACHER') or @authz.hasRole(authentication, 'LECTURER')")
     public ResponseEntity<java.util.Map<String, Object>> getAllStudentWarnings(
             @RequestParam(required = false) Integer centerId
     ) {

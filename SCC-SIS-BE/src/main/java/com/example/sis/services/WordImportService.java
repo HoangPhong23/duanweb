@@ -83,10 +83,11 @@ public class WordImportService {
     private List<QuestionImportDTO> parseTextFormat(String content) {
         List<QuestionImportDTO> questions = new ArrayList<>();
         
-        // Pattern để tìm câu hỏi
+        // Pattern linh hoạt hơn: Chấp nhận Câu 1: hoặc Câu 1. hoặc Câu 1;
+        // Sử dụng [\\s\\h] để bắt cả khoảng trắng thường và khoảng trắng đặc biệt (non-breaking space)
         Pattern questionPattern = Pattern.compile(
-            "Câu\\s+(\\d+):\\s*(.+?)(?=Câu\\s+\\d+:|$)", 
-            Pattern.DOTALL
+            "Câu[\\s\\h]+(\\d+)[\\s\\h]*[:.;][\\s\\h]*(.+?)(?=Câu[\\s\\h]+\\d+[\\s\\h]*[:.;]|$)", 
+            Pattern.DOTALL | Pattern.CASE_INSENSITIVE
         );
         
         Matcher questionMatcher = questionPattern.matcher(content);
@@ -110,7 +111,7 @@ public class WordImportService {
     private QuestionImportDTO parseQuestionBlock(String block) {
         try {
             // Tách dòng
-            String[] lines = block.split("\n");
+            String[] lines = block.split("\\n");
             
             // Dòng đầu tiên là câu hỏi
             String questionText = lines[0].trim();
@@ -119,10 +120,10 @@ public class WordImportService {
             List<OptionImportDTO> options = new ArrayList<>();
             String correctAnswer = null;
             
-            // Pattern cho options: A. <p>
-            Pattern optionPattern = Pattern.compile("^([A-Z])\\.\\s*(.+)$");
-            // Pattern cho đáp án: Đáp án: A
-            Pattern answerPattern = Pattern.compile("Đáp\\s*án:\\s*([A-Z])");
+            // Pattern cho options: A. hoặc A: hoặc A;
+            Pattern optionPattern = Pattern.compile("^([A-Z])[\\s\\h]*[:.;][\\s\\h]*(.+)$", Pattern.CASE_INSENSITIVE);
+            // Pattern cho đáp án: Chấp nhận cả "Đáp án:" và "Đáp án;"
+            Pattern answerPattern = Pattern.compile("Đáp[\\s\\h]*án[\\s\\h]*[:.;][\\s\\h]*([A-Z])", Pattern.CASE_INSENSITIVE);
             
             for (int i = 1; i < lines.length; i++) {
                 String line = lines[i].trim();
@@ -132,12 +133,12 @@ public class WordImportService {
                 // Kiểm tra option
                 Matcher optionMatcher = optionPattern.matcher(line);
                 if (optionMatcher.matches()) {
-                    String optionLetter = optionMatcher.group(1);
+                    String optionLetter = optionMatcher.group(1).toUpperCase();
                     String optionText = optionMatcher.group(2);
                     
                     OptionImportDTO option = new OptionImportDTO();
                     option.setText(optionText);
-                    option.setIsCorrect(false); // Sẽ set true sau khi đọc đáp án
+                    option.setIsCorrect(false); 
                     options.add(option);
                     continue;
                 }
@@ -145,7 +146,7 @@ public class WordImportService {
                 // Kiểm tra đáp án
                 Matcher answerMatcher = answerPattern.matcher(line);
                 if (answerMatcher.find()) {
-                    correctAnswer = answerMatcher.group(1);
+                    correctAnswer = answerMatcher.group(1).toUpperCase();
                 }
             }
             

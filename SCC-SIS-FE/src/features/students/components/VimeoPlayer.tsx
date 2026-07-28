@@ -192,11 +192,11 @@ export function VimeoPlayer({ videoUrl, lessonId, lastPosition = 0, onProgressUp
     };
 
     return (
-        <div className="relative w-full">
+        <div className="relative w-full overflow-hidden rounded-lg shadow-2xl bg-black" style={{ aspectRatio: '16/9' }}>
             {/* Vimeo Player - Sử dụng controls có sẵn của Vimeo */}
             <div 
                 ref={containerRef} 
-                className="w-full rounded-lg overflow-hidden shadow-2xl bg-black"
+                className="absolute inset-0 w-full h-full"
             />
             
             {/* Completed badge - top right */}

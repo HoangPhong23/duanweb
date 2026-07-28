@@ -53,5 +53,17 @@ public interface AttendanceService {
      * GET /api/students/{studentId}/classes/{classId}/attendance
      */
     StudentAttendanceHistoryResponse getStudentAttendanceHistory(Integer studentId, Integer classId);
+
+    /**
+     * Giảng viên set/bật mã điểm danh cho một buổi
+     * POST /api/attendance-sessions/{sessionId}/code
+     */
+    SetAttendanceCodeResponse setAttendanceCode(Integer sessionId, SetAttendanceCodeRequest request, Integer currentUserId);
+
+    /**
+     * Học viên submit mã để tự điểm danh
+     * POST /api/attendance/submit-code
+     */
+    void submitAttendanceCode(StudentSubmitCodeRequest request, Integer currentUserId);
 }
 

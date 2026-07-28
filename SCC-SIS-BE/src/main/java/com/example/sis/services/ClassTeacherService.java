@@ -201,6 +201,9 @@ public class ClassTeacherService {
         ClassEntity classEntity = classRepository.findById(classId)
                 .orElseThrow(() -> new ResourceNotFoundException("Class not found with id: " + classId));
 
+        if (classEntity.getCenter() == null) {
+            throw new ValidationException("Lớp học không thuộc trung tâm nào");
+        }
         Integer centerId = classEntity.getCenter().getCenterId();
 
         // Đếm số lượng giảng viên active hiện tại

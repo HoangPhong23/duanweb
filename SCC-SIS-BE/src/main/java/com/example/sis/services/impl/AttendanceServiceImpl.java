@@ -617,5 +617,131 @@ public class AttendanceServiceImpl implements AttendanceService {
         
         return response;
     }
+
+    // ===================================================================
+    //  ĐIỂM DANH BẰNG MÃ
+    // ===================================================================
+
+    @Override
+    public SetAttendanceCodeResponse setAttendanceCode(Integer sessionId,
+                                                        SetAttendanceCodeRequest request,
+                                                        Integer currentUserId) {
+        AttendanceSession session = sessionRepo.findById(sessionId)
+                .orElseThrow(() -> new NotFoundException("Buổi điểm danh không tồn tại: " + sessionId));
+
+        if (session.getDeleted()) {
+            throw new NotFoundException("Buổi điểm danh không tồn tại: " + sessionId);
+        }
+
+        // Cập nhật mã và trạng thái
+        session.setAttendanceCode(request.getAttendanceCode());
+        session.setCodeEnabled(request.getCodeEnabled());
+
+        // Tính thời hạn (nếu có)
+        if (Boolean.TRUE.equals(request.getCodeEnabled()) && request.getExpiresMinutes() != null) {
+            session.setCodeExpiresAt(LocalDateTime.now().plusMinutes(request.getExpiresMinutes()));
+        } else if (Boolean.FALSE.equals(request.getCodeEnabled())) {
+            // Tắt mã → xóa thời hạn
+            session.setCodeExpiresAt(null);
+        }
+
+        if (currentUserId != null) {
+            User updatedBy = em.getReference(User.class, currentUserId);
+            session.setUpdatedBy(updatedBy);
+        }
+        session.setUpdatedAt(LocalDateTime.now());
+
+        AttendanceSession saved = sessionRepo.save(session);
+
+        SetAttendanceCodeResponse response = new SetAttendanceCodeResponse();
+        response.setSessionId(saved.getSessionId());
+        response.setAttendanceCode(saved.getAttendanceCode());
+        response.setCodeEnabled(saved.getCodeEnabled());
+        response.setCodeExpiresAt(saved.getCodeExpiresAt());
+        response.setMessage(Boolean.TRUE.equals(saved.getCodeEnabled())
+                ? "Đã bật điểm danh bằng mã: " + saved.getAttendanceCode()
+                : "Đã tắt điểm danh bằng mã");
+        return response;
+    }
+
+    @Override
+    public void submitAttendanceCode(StudentSubmitCodeRequest request, Integer currentUserId) {
+        LocalDate today = LocalDate.now();
+
+        // 1. Tìm session hôm nay của lớp đang bật mã
+        AttendanceSession session = sessionRepo
+                .findActiveCodeSessionByClassAndDate(request.getClassId(), today)
+                .orElseThrow(() -> new BadRequestException(
+                        "Không có buổi điểm danh đang mở bằng mã cho lớp này hôm nay"));
+
+        // 2. Kiểm tra mã có hết hạn không
+        if (session.getCodeExpiresAt() != null && LocalDateTime.now().isAfter(session.getCodeExpiresAt())) {
+            throw new BadRequestException("Mã điểm danh đã hết hạn");
+        }
+
+        // 3. So sánh mã (case-insensitive)
+        String submitted = request.getAttendanceCode() != null ? request.getAttendanceCode().trim().toUpperCase() : "";
+        String expected = session.getAttendanceCode() != null ? session.getAttendanceCode().trim().toUpperCase() : "";
+        if (!submitted.equals(expected)) {
+            throw new BadRequestException("Mã điểm danh không đúng");
+        }
+
+        // 4. Tìm Student từ userId
+        Student student = studentRepo.findByUserIdAndDeletedAtIsNull(currentUserId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy thông tin học viên"));
+
+        // 5. Tìm AttendanceRecord của học viên trong session này
+        List<AttendanceRecord> records = session.getRecords();
+        AttendanceRecord record = null;
+        if (records != null) {
+            record = records.stream()
+                    .filter(r -> r.getStudent() != null
+                            && r.getStudent().getStudentId().equals(student.getStudentId()))
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        if (record == null) {
+            throw new BadRequestException("Bạn không có trong danh sách học viên của buổi điểm danh này. Vui lòng liên hệ giảng viên.");
+        }
+
+        // 6. Cập nhật status → PRESENT
+        if (record.getStatus() == AttendanceStatus.PRESENT) {
+            // Đã điểm danh rồi, không làm gì thêm (idempotent)
+            return;
+        }
+
+        record.setStatus(AttendanceStatus.PRESENT);
+
+        if (currentUserId != null) {
+            User updatedBy = em.getReference(User.class, currentUserId);
+            record.setUpdatedBy(updatedBy);
+        }
+        record.setUpdatedAt(LocalDateTime.now());
+
+        recordRepo.save(record);
+
+        // Cập nhật lại present/absent count của session
+        long presentCount = session.getRecords().stream()
+                .filter(r -> r.getStatus() == AttendanceStatus.PRESENT)
+                .count();
+        session.setPresentCount((int) presentCount);
+        session.setAbsentCount(session.getTotalStudents() - (int) presentCount);
+        session.setUpdatedAt(LocalDateTime.now());
+        sessionRepo.save(session);
+
+        // 7. Gửi notification
+        notificationService.createAndSend(
+                currentUserId,
+                "ATTENDANCE_RECORDED",
+                "Điểm danh thành công",
+                "Bạn đã điểm danh thành công buổi học ngày " + session.getAttendanceDate()
+                        + " bằng mã điểm danh.",
+                "attendance_session",
+                session.getSessionId().longValue(),
+                "low"
+        );
+    }
 }
+
 

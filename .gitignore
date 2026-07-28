@@ -1,10 +1,24 @@
 SCC-SIS-FE/.env
-SCC-SIS-FE/.env
+SCC-SIS-FE/.env.local
+SCC-SIS-FE/.env.production
 .playwright-mcp/
 node_modules/
 dist/
 build/
 target/
 *.log
-SCC-SIS-BE/target/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# zip archives
+*.zip
+
+# Sensitive Spring Boot config (copy from application.properties.example)
 SCC-SIS-BE/src/main/resources/application.properties
+
+# IDE
+.idea/
+*.iml
+.vscode/

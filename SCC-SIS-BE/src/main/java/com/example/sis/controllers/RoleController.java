@@ -15,7 +15,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/roles")
-@PreAuthorize("@authz.isSuperAdmin(authentication)") // Super Admin only for all role management
 public class RoleController {
 
     private final RoleService roleService;
@@ -27,6 +26,7 @@ public class RoleController {
      * Hỗ trợ tham số preview để tùy chỉnh số lượng permission preview
      */
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<RoleListResponse> listRoles(
             @RequestParam(value = "preview", required = false) Integer preview) {
         return ResponseEntity.ok(roleService.listRolesNew(preview));
@@ -37,6 +37,7 @@ public class RoleController {
      * Fetch role by ID.
      */
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<RoleResponse> getRoleById(@PathVariable Integer id) {
         return ResponseEntity.ok(roleService.getRoleById(id));
     }
@@ -47,6 +48,7 @@ public class RoleController {
      * 201 Created on success.
      */
     @PostMapping
+    @PreAuthorize("@authz.isSuperAdmin(authentication)")
     public ResponseEntity<RoleResponse> createRole(@Valid @RequestBody CreateRoleRequest request) {
         RoleResponse created = roleService.createRole(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
@@ -57,6 +59,7 @@ public class RoleController {
      * Update a role.
      */
     @PutMapping("/{id}")
+    @PreAuthorize("@authz.isSuperAdmin(authentication)")
     public ResponseEntity<RoleResponse> updateRole(@PathVariable Integer id,
                                                    @Valid @RequestBody UpdateRoleRequest request) {
         return ResponseEntity.ok(roleService.updateRole(id, request));
@@ -68,6 +71,7 @@ public class RoleController {
      * 204 No Content on success.
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("@authz.isSuperAdmin(authentication)")
     public ResponseEntity<Void> deleteRole(@PathVariable Integer id) {
         roleService.deleteRole(id);
         return ResponseEntity.noContent().build();

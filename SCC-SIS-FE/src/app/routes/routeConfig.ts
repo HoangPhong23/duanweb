@@ -39,10 +39,12 @@ const ExamManagementPage = lazy(() => import('../../features/users/pages/exams/E
 const AttendanceStatisticsPage = lazy(() => import('../../features/users/pages/statistics/AttendanceStatisticsPage'));
 const AIChatPage = lazy(() => import('../../features/students/pages/AIChat/AIChatPage'));
 const AIChatAnalyticsPage = lazy(() => import('../../features/users/pages/ai-chat-analytics/AIChatAnalyticsPage'));
+const ChatPage = lazy(() => import('../../features/chat/pages/ChatPage'));
 
 // List of all application routes. Order does not matter except for root redirect logic.
 export const appRoutes: AppRoute[] = [
     { path: '/', component: DashboardPage, redirectIfStudent: true, index: true },
+    { path: '/chat', component: ChatPage },
     { path: '/progress', component: ProgressPage, allowedRoles: ['STUDENT'] },
     { path: '/achievements', component: AchievementsPage, allowedRoles: ['STUDENT'] },
     { path: '/users', component: UsersPage },

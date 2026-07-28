@@ -18,6 +18,7 @@ import {
     TrendingUp,
     Calendar,
     Trophy,
+    MessageSquare,
 } from 'lucide-react';
 import { keycloak } from '../../keycloak';
 import { useUserProfile } from '../../stores/userProfile';
@@ -129,6 +130,7 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
     };
 
     const navigationItems = [
+        { name: 'Tin nhắn', path: '/chat', icon: MessageSquare },
         { name: 'Hồ sơ cá nhân', path: '/profile', icon: User },
         { name: 'Lớp học của tôi', path: '/my-classes', icon: BookOpen },
         { name: 'Lịch sử học tập', path: '/learning-history', icon: History },
@@ -615,6 +617,19 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
                                     >
                                         <Calendar className="mr-4 h-6 w-6" />
                                         Điểm danh của tôi
+                                    </NavLink>
+                                    <NavLink
+                                        to="/chat"
+                                        className={({ isActive }) =>
+                                            `flex items-center rounded-xl px-4 py-3 text-base font-semibold transition-all ${
+                                                isActive
+                                                    ? 'bg-indigo-50 text-indigo-700 shadow-sm'
+                                                    : 'text-gray-700 hover:bg-gray-50'
+                                            }`
+                                        }
+                                    >
+                                        <MessageSquare className="mr-4 h-6 w-6 text-indigo-600" />
+                                        Tin nhắn
                                     </NavLink>
                                 </div>
                             </div>

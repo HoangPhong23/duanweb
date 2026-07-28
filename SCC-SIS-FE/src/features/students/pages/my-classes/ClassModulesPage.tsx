@@ -13,12 +13,14 @@ import {
     PenTool,
     ChevronDown,
     ChevronUp,
+    MessageSquare,
 } from 'lucide-react';
 import { useToast } from '@/shared/hooks/useToast';
 import { getMyClasses, type ClassDto } from '@/shared/api/classes';
 import { getModulesByProgram, type ModuleResponse } from '@/shared/api/modules';
 import { getLessonsByModule, type Lesson } from '@/shared/api/lessons';
 import { lessonProgressApi, type LessonProgressResponse } from '@/shared/api/lesson-progress';
+import { getOrCreateClassGroupRoom } from '@/shared/api/chat';
 import { useUserProfile } from '@/stores/userProfile';
 import { useProgressStore } from '../../hooks/useProgressStore';
 
@@ -344,6 +346,16 @@ export default function ClassModulesPage() {
         );
     }
 
+    const handleOpenClassChat = async () => {
+        if (!cls?.classId) return;
+        try {
+            await getOrCreateClassGroupRoom(cls.classId);
+            navigate('/chat');
+        } catch (e) {
+            toast.error('Không thể mở nhóm chat của lớp học');
+        }
+    };
+
     return (
         <div className="max-w-6xl mx-auto space-y-6 p-6">
             <button
@@ -360,9 +372,18 @@ export default function ClassModulesPage() {
                         <h1 className="text-3xl font-bold mb-2">{cls.name}</h1>
                         <p className="text-blue-100 text-sm">Mã lớp: #{cls.classId}</p>
                     </div>
-                    <span className="px-4 py-2 rounded-full text-sm font-medium bg-white/20 backdrop-blur-sm">
-                        {getClassStatus(cls.status)}
-                    </span>
+                    <div className="flex items-center gap-3">
+                        <span className="px-4 py-2 rounded-full text-sm font-medium bg-white/20 backdrop-blur-sm">
+                            {getClassStatus(cls.status)}
+                        </span>
+                        <button
+                            onClick={handleOpenClassChat}
+                            className="px-4 py-2 rounded-xl text-sm font-semibold bg-white text-blue-700 hover:bg-blue-50 transition-colors shadow-sm flex items-center gap-2"
+                        >
+                            <MessageSquare size={16} />
+                            Nhóm Chat Lớp
+                        </button>
+                    </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div className="flex items-center gap-3">

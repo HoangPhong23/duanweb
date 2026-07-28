@@ -15,7 +15,7 @@ import {
     FileText,
     ArrowLeft,
 } from 'lucide-react';
-import { createChatSession, getChatSessions, getChatSessionDetails, sendChatMessage, deleteChatSession, type ChatSessionDTO, type ChatMessageResponse, type ChatSessionDetailsResponse } from '@/shared/api/chat';
+import { createChatSession, getChatSessions, getChatSessionDetails, sendChatMessage, deleteChatSession, type ChatSessionDTO, type ChatMessageResponse, type ChatSessionDetailsResponse } from '@/shared/api/ai-chat';
 import type { AIChatMessage } from '@/shared/api/ai-chat';
 import { 
     uploadKnowledgeDocument, 
@@ -151,10 +151,11 @@ export default function AIChatPage() {
         }
     };
 
-    const handleSendMessage = async () => {
-        if (!inputValue.trim() || isLoading || !currentSessionId) return;
+    const handleSendMessage = async (directText?: string) => {
+        const textToSend = directText ?? inputValue;
+        if (!textToSend.trim() || isLoading || !currentSessionId) return;
 
-        const userMessage = inputValue.trim();
+        const userMessage = textToSend.trim();
         setInputValue('');
 
         // Add user message immediately
@@ -618,18 +619,136 @@ export default function AIChatPage() {
                                     <span className="ml-3 text-gray-600">Tải tin nhắn...</span>
                                 </div>
                             ) : messages.length === 0 ? (
-                                <div
-                                    className="flex flex-col items-center justify-center h-full text-center px-6"
-                                    style={{ paddingTop: '10vh' }}
-                                >
-                                    <Bot className="h-32 w-32 text-blue-600 mb-8" />
-                                    <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                                        Xin chào! Tôi là trợ lý AI của bạn.
-                                    </h2>
-                                    <p className="text-xl text-gray-600 max-w-2xl leading-relaxed">
-                                        Tôi có thể giúp bạn với thông tin về lớp học, lịch học, điểm số, bài tập và
-                                        nhiều hơn nữa. Hãy bắt đầu bằng cách đặt một câu hỏi!
-                                    </p>
+                                <div className="flex flex-col h-full px-6 py-8 overflow-y-auto">
+                                    {/* Greeting */}
+                                    <div className="flex flex-col items-center mb-8 text-center">
+                                        <div className="relative mb-4">
+                                            <div className="h-20 w-20 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-xl">
+                                                <Bot className="h-11 w-11 text-white" />
+                                            </div>
+                                            <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-green-400 border-2 border-white" />
+                                        </div>
+                                        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                                            Xin chào, {profile?.fullName?.split(' ').slice(-1)[0] || 'bạn'}! 👋
+                                        </h2>
+                                        <p className="text-gray-500 max-w-md">
+                                            Tôi có thể giúp gì cho bạn hôm nay?
+                                        </p>
+                                    </div>
+
+                                    {/* Suggested Questions Grid */}
+                                    <div className="max-w-3xl mx-auto w-full">
+
+                                        {/* Student */}
+                                        {profile?.roles?.some(r => r.code === 'STUDENT') && (
+                                            <div className="mb-6">
+                                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                                    <span className="text-lg">🎓</span> Học tập cá nhân
+                                                </p>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    {[
+                                                        { icon: '📅', text: 'Lịch học tuần này của tôi như thế nào?' },
+                                                        { icon: '📊', text: 'Tỷ lệ điểm danh hiện tại của tôi là bao nhiêu?' },
+                                                        { icon: '📝', text: 'Tôi còn bao nhiêu buổi trước kỳ thi?' },
+                                                        { icon: '🏆', text: 'Điểm số các môn học của tôi ra sao?' },
+                                                        { icon: '⚠️', text: 'Tôi có nguy cơ bị cấm thi không?' },
+                                                        { icon: '📚', text: 'Bài tập nào tôi chưa hoàn thành?' },
+                                                    ].map((q, i) => (
+                                                        <button
+                                                            key={i}
+                                                            onClick={() => handleSendMessage(q.text)}
+                                                            className="flex items-start gap-3 px-4 py-3 rounded-xl border border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 group shadow-sm text-left"
+                                                        >
+                                                            <span className="text-xl flex-shrink-0">{q.icon}</span>
+                                                            <span className="text-sm text-gray-700 group-hover:text-blue-700 font-medium leading-relaxed">{q.text}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Lecturer */}
+                                        {profile?.roles?.some(r => r.code === 'LECTURER') && (
+                                            <div className="mb-6">
+                                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                                    <span className="text-lg">👨‍🏫</span> Quản lý lớp học
+                                                </p>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    {[
+                                                        { icon: '📋', text: 'Tôi đang dạy những lớp nào?' },
+                                                        { icon: '📊', text: 'Thống kê điểm danh hôm nay của các lớp tôi?' },
+                                                        { icon: '⚠️', text: 'Học viên nào đang có nguy cơ cấm thi?' },
+                                                        { icon: '📈', text: 'Thống kê chuyên cần tổng quan các lớp tôi?' },
+                                                        { icon: '✍️', text: 'Soạn thông báo nhắc học viên vắng nhiều' },
+                                                        { icon: '👥', text: 'Danh sách học viên các lớp tôi phụ trách?' },
+                                                    ].map((q, i) => (
+                                                        <button
+                                                            key={i}
+                                                            onClick={() => handleSendMessage(q.text)}
+                                                            className="flex items-start gap-3 px-4 py-3 rounded-xl border border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 group shadow-sm text-left"
+                                                        >
+                                                            <span className="text-xl flex-shrink-0">{q.icon}</span>
+                                                            <span className="text-sm text-gray-700 group-hover:text-blue-700 font-medium leading-relaxed">{q.text}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Admin */}
+                                        {profile?.roles?.some(r => ['SUPER_ADMIN', 'ACADEMIC_STAFF', 'CENTER_MANAGER'].includes(r.code)) && (
+                                            <div className="mb-6">
+                                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                                    <span className="text-lg">🏢</span> Quản trị & Báo cáo
+                                                </p>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    {[
+                                                        { icon: '📊', text: 'Thống kê tổng quan hệ thống hiện tại?' },
+                                                        { icon: '🏫', text: 'Tình trạng các lớp học đang hoạt động?' },
+                                                        { icon: '📈', text: 'Thống kê điểm danh toàn bộ hôm nay?' },
+                                                        { icon: '⚠️', text: 'Lớp nào có tỷ lệ vắng cao nhất?' },
+                                                        { icon: '👥', text: 'Thống kê ghi danh theo chương trình?' },
+                                                        { icon: '🔍', text: 'Lớp nào chưa có giảng viên phụ trách?' },
+                                                    ].map((q, i) => (
+                                                        <button
+                                                            key={i}
+                                                            onClick={() => handleSendMessage(q.text)}
+                                                            className="flex items-start gap-3 px-4 py-3 rounded-xl border border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 group shadow-sm text-left"
+                                                        >
+                                                            <span className="text-xl flex-shrink-0">{q.icon}</span>
+                                                            <span className="text-sm text-gray-700 group-hover:text-blue-700 font-medium leading-relaxed">{q.text}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Trợ lý trung tâm - All roles */}
+                                        <div className="mb-6">
+                                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                                <span className="text-lg">🏢</span> Thông tin trung tâm
+                                            </p>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                {[
+                                                    { icon: '📋', text: 'Quy định về điểm danh và chuyên cần?' },
+                                                    { icon: '💰', text: 'Chính sách học phí và hoàn phí như thế nào?' },
+                                                    { icon: '📞', text: 'Liên hệ hỗ trợ khi gặp vấn đề?' },
+                                                    { icon: '📚', text: 'Trung tâm có những chương trình đào tạo nào?' },
+                                                    { icon: '🎓', text: 'Điều kiện tốt nghiệp và cấp chứng chỉ?' },
+                                                    { icon: '📅', text: 'Lịch khai giảng các lớp sắp tới?' },
+                                                ].map((q, i) => (
+                                                    <button
+                                                        key={i}
+                                                        onClick={() => handleSendMessage(q.text)}
+                                                        className="flex items-start gap-3 px-4 py-3 rounded-xl border border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 group shadow-sm text-left"
+                                                    >
+                                                        <span className="text-xl flex-shrink-0">{q.icon}</span>
+                                                        <span className="text-sm text-gray-700 group-hover:text-blue-700 font-medium leading-relaxed">{q.text}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             ) : (
                                 <>
