@@ -223,13 +223,6 @@ export default function AIAssistant({ className = '' }: AIAssistantProps) {
         }
     };
 
-    const handleRemoveFile = (index: number) => {
-        setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
-    };
-
-    /**
-     * Load saved files from backend
-     */
     const loadSavedFiles = async () => {
         try {
             const documents = await getAllKnowledgeDocuments();
@@ -244,11 +237,29 @@ export default function AIAssistant({ className = '' }: AIAssistantProps) {
                 createdByName: doc.createdByName,
             }));
             setSavedFiles(files);
-        } catch (error) {
-            console.error('Failed to load files:', error);
-            toast.error('Lỗi', 'Không thể tải danh sách file');
+        } catch (error: any) {
+            console.warn('Failed to load knowledge files:', error?.response?.status === 403 ? 'Forbidden (No permission)' : error);
+            // Don't show toast error if user doesn't have permission to manage knowledge base
+            if (error?.response?.status !== 403) {
+                toast.error('Lỗi', 'Không thể tải danh sách file');
+            }
         }
     };
+
+    const handleRemoveFile = (index: number) => {
+        setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    /**
+     * Load saved files on mount (Admin / Academic Staff only)
+     */
+    useEffect(() => {
+        if (isOpen && profile && profile.roles.some(r => 
+            ['SUPER_ADMIN', 'ADMIN', 'CENTER_MANAGER', 'ACADEMIC_STAFF'].includes(r.code)
+        )) {
+            loadSavedFiles();
+        }
+    }, [isOpen, profile]);
 
     /**
      * Upload files to backend and save to knowledge base
@@ -313,14 +324,7 @@ export default function AIAssistant({ className = '' }: AIAssistantProps) {
         return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     };
 
-    // Load saved files on mount (admin only)
-    useEffect(() => {
-        if (isOpen && profile && profile.roles.some(r => 
-            ['SUPER_ADMIN', 'ACADEMIC_STAFF', 'LECTURER'].includes(r.code)
-        )) {
-            loadSavedFiles();
-        }
-    }, [isOpen, profile]);
+
 
     const handleClose = () => {
         setIsExiting(true);
@@ -402,9 +406,9 @@ export default function AIAssistant({ className = '' }: AIAssistantProps) {
                         </div>
                     </div>
 
-                    {/* Files Management Section - Admin Only */}
+                    {/* Files Management Section - Admin / Academic Staff Only */}
                     {profile &&
-                        profile.roles.some(r => ['SUPER_ADMIN', 'ACADEMIC_STAFF', 'LECTURER'].includes(r.code)) && (
+                        profile.roles.some(r => ['SUPER_ADMIN', 'ADMIN', 'CENTER_MANAGER', 'ACADEMIC_STAFF'].includes(r.code)) && (
                             <div className="border-b border-gray-200 bg-white">
                                 <button
                                     onClick={() => setShowFilesSection(!showFilesSection)}

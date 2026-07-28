@@ -23,7 +23,7 @@ import java.util.List;
 @RequestMapping("/api/admin/knowledge")
 @RequiredArgsConstructor
 @Slf4j
-@PreAuthorize("@authz.isSuperAdmin(authentication) or @authz.hasRole(authentication, 'ADMIN')") // ✅ Only ADMIN can access
+@PreAuthorize("@authz.isSuperAdmin(authentication) or @authz.hasAnyRole(authentication, 'ADMIN', 'ACADEMIC_STAFF', 'CENTER_MANAGER')")
 public class AdminKnowledgeController {
     
     private final KnowledgeService knowledgeService;
