@@ -55,7 +55,28 @@ public class RealtimeDataFetcher {
                msg.contains("lớp tôi") ||
                msg.contains("chuyên cần") ||
                msg.contains("danh sách") ||
-               msg.contains("học viên");
+               msg.contains("học viên") ||
+               // ── Lecturer keywords ──
+               msg.contains("đang dạy") ||
+               msg.contains("lớp nào") ||
+               msg.contains("được giao") ||
+               msg.contains("phân công") ||
+               msg.contains("lớp học") ||
+               msg.contains("báo cáo") ||
+               msg.contains("tổng quan") ||
+               msg.contains("nghỉ nhiều") ||
+               msg.contains("vắng nhiều") ||
+               // ── Admin keywords ──
+               msg.contains("tình trạng") ||
+               msg.contains("trạng thái") ||
+               msg.contains("hoạt động") ||
+               msg.contains("ghi danh") ||
+               msg.contains("chương trình") ||
+               msg.contains("tỷ lệ vắng") ||
+               msg.contains("vắng cao") ||
+               msg.contains("giảng viên") ||
+               msg.contains("chưa phân công") ||
+               msg.contains("thiếu giảng viên");
     }
 
     /**
