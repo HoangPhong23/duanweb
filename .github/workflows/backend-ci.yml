@@ -1,0 +1,103 @@
+name: SCC-SIS Backend CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - 'SCC-SIS-BE/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    branches:
+      - main
+      - dev
+    paths:
+      - 'SCC-SIS-BE/**'
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./SCC-SIS-BE
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: ☕ Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: 🔧 Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('SCC-SIS-BE/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+
+      - name: 🧪 Run Tests
+        run: mvn clean test
+
+      - name: 📊 Generate JaCoCo Coverage Report
+        run: mvn jacoco:report
+
+      - name: 📄 Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            SCC-SIS-BE/target/surefire-reports/**
+            SCC-SIS-BE/target/site/jacoco/**
+
+  build-and-push-docker:
+    name: Build & Push Docker Image
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔐 Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: 🏷️ Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: hphong23/scc-sis-be
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: 🔨 Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./SCC-SIS-BE
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=hphong23/scc-sis-be:buildcache
+          cache-to: type=registry,ref=hphong23/scc-sis-be:buildcache,mode=max
+
+      - name: 🎉 Docker Image Info
+        run: |
+          echo "✅ Docker image pushed successfully!"
+          echo "📦 Image: hphong23/scc-sis-be"
+          echo "🏷️ Tags: ${{ steps.meta.outputs.tags }}"

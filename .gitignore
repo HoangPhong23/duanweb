@@ -22,3 +22,9 @@ SCC-SIS-BE/src/main/resources/application.properties
 .idea/
 *.iml
 .vscode/
+
+# Documents & temporary office files
+*.pdf
+*.docx
+*.xlsx
+~*

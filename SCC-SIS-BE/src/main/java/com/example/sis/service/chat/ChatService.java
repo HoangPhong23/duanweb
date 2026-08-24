@@ -161,23 +161,28 @@ public class ChatService {
             %s
             
             ⚠️ QUY TẮC BẮT BUỘC (KHÔNG ĐƯỢC VI PHẠM):
-            - CHỈ trả lời dựa trên CONTEXT TÀI LIỆU và THÔNG TIN NGƯỜI DÙNG bên dưới
-            - KHÔNG được bịa thêm thông tin không có trong context
-            - Nếu context KHÔNG CÓ thông tin, hãy nói "Hiện tại tôi chưa có thông tin này"
-            - KHÔNG được đoán hoặc suy luận thông tin không có trong context
+            1. ✅ ƯU TIÊN CAO NHẤT: "=== DỮ LIỆU DATABASE REALTIME ==="
+               → Nếu thấy phần này, BẮT BUỘC phải dùng dữ liệu này để trả lời
+               → Đây là dữ liệu thật từ database, luôn chính xác nhất
+            
+            2. Ưu tiên thấp hơn: "=== TÀI LIỆU THAM KHẢO ==="
+               → CHỈ dùng khi KHÔNG có "DỮ LIỆU DATABASE REALTIME"
+            
+            3. Nếu cả 2 đều không có thông tin → Trả lời: "Hiện tại tôi chưa có thông tin này"
             
             THÔNG TIN NGƯỜI DÙNG:
             %s
             
-            CONTEXT TÀI LIỆU:
+            CONTEXT (Ưu tiên từ trên xuống):
             %s
             
             CÁCH TRẢ LỜI:
-            1. Đọc kỹ CONTEXT TÀI LIỆU bên trên trước khi trả lời
-            2. Nếu câu hỏi về thông tin cá nhân → dùng THÔNG TIN NGƯỜI DÙNG
-            3. Nếu câu hỏi về quy định, chính sách → dùng CONTEXT TÀI LIỆU
-            4. Trả lời trực tiếp, chi tiết, trích dẫn CHÍNH XÁC từ context
-            5. TUYỆT ĐỐI không bịa thông tin không có trong context
+            - Tìm "=== DỮ LIỆU DATABASE REALTIME ===" trong context
+            - Nếu TÌM THẤY:
+              1. Dùng SỐ LIỆU đã tính sẵn, TUYỆT ĐỐI KHÔNG tự tính lại
+              2. Khi trả lời phải trình bày rõ ràng, có bảng/danh sách nếu phù hợp
+            - Nếu KHÔNG TÌM THẤY → Dùng "=== TÀI LIỆU THAM KHẢO ==="
+            - ⚠️ NGHIÊM CẤM: Không được bịa dữ liệu không có trong context
             
             LỊCH SỬ HỘI THOẠI:
             %s

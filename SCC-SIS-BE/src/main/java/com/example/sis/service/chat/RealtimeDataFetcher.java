@@ -33,7 +33,8 @@ public class RealtimeDataFetcher {
     private int serverPort;
 
     /**
-     * Analyze user message and determine if it requires real-time data
+     * Analyze user message and determine if it requires real-time data.
+     * Expanded to cover more natural Vietnamese phrasing patterns.
      */
     public boolean needsRealtimeData(String userMessage) {
         String msg = userMessage.toLowerCase();
@@ -56,6 +57,7 @@ public class RealtimeDataFetcher {
                msg.contains("chuyên cần") ||
                msg.contains("danh sách") ||
                msg.contains("học viên") ||
+               msg.contains("học sinh") ||
                // ── Lecturer keywords ──
                msg.contains("đang dạy") ||
                msg.contains("lớp nào") ||
@@ -66,6 +68,7 @@ public class RealtimeDataFetcher {
                msg.contains("tổng quan") ||
                msg.contains("nghỉ nhiều") ||
                msg.contains("vắng nhiều") ||
+               msg.contains("vắng") ||
                // ── Admin keywords ──
                msg.contains("tình trạng") ||
                msg.contains("trạng thái") ||
@@ -73,10 +76,17 @@ public class RealtimeDataFetcher {
                msg.contains("ghi danh") ||
                msg.contains("chương trình") ||
                msg.contains("tỷ lệ vắng") ||
+               msg.contains("tỷ lệ") ||
                msg.contains("vắng cao") ||
                msg.contains("giảng viên") ||
                msg.contains("chưa phân công") ||
-               msg.contains("thiếu giảng viên");
+               msg.contains("thiếu giảng viên") ||
+               msg.contains("lớp") ||
+               msg.contains("trung tâm") ||
+               msg.contains("thông tin") ||
+               msg.contains("có mấy") ||
+               msg.contains("có bao") ||
+               msg.contains("được bao");
     }
 
     /**
@@ -239,8 +249,27 @@ public class RealtimeDataFetcher {
         // ═══════════════════════════════════════════════════
         boolean isAdmin = userContext != null && Boolean.TRUE.equals(userContext.get("isAdmin"));
         if (isAdmin) {
-            // 1. Tình trạng các lớp học đang hoạt động / Phân bố trạng thái lớp
-            if (msg.contains("tình trạng") || msg.contains("trạng thái lớp") || msg.contains("lớp học đang hoạt động") || msg.contains("hoạt động")) {
+            // Auto-inject system overview stats for Admin on any realtime query
+            try {
+                if (!hasRealtimeData) {
+                    dataContext.append("\n\n=== DỮ LIỆU DATABASE REALTIME (Ưu tiên trả lời) ===\n");
+                    dataContext.append(String.format("📅 NGÀY HÔM NAY: %s\n\n", today));
+                    hasRealtimeData = true;
+                }
+                Map<String, Object> sysStats = systemStatsService.getSystemStats();
+                dataContext.append("THỐNG KÊ TỔNG QUAN HỆ THỐNG:\n");
+                dataContext.append(String.format("  • Tổng người dùng: %s | Học viên: %s | Đang học: %s | Giảng viên: %s | Quản trị: %s\n",
+                        sysStats.get("total_users"), sysStats.get("total_students"),
+                        sysStats.get("active_students"), sysStats.get("total_instructors"),
+                        sysStats.get("total_admins")));
+            } catch (Exception e) {
+                log.error("Failed to fetch system stats for admin", e);
+            }
+
+            // 1. Tình trạng / Phân bố trạng thái lớp
+            if (msg.contains("tình trạng") || msg.contains("trạng thái") || msg.contains("lớp học") ||
+                msg.contains("hoạt động") || msg.contains("lớp") || msg.contains("tổng quan") ||
+                msg.contains("thống kê") || msg.contains("bao nhiêu") || msg.contains("có mấy")) {
                 try {
                     List<Map<String, Object>> statusList = systemStatsService.getAdminClassStatusSummary();
                     if (!hasRealtimeData) {
@@ -258,7 +287,8 @@ public class RealtimeDataFetcher {
             }
 
             // 2. Thống kê điểm danh toàn bộ hôm nay
-            if (msg.contains("điểm danh toàn bộ") || msg.contains("điểm danh toàn trung tâm") || (msg.contains("điểm danh") && msg.contains("hôm nay"))) {
+            if (msg.contains("điểm danh") || msg.contains("vắng") || msg.contains("hôm nay") ||
+                msg.contains("có mặt") || msg.contains("chuyên cần")) {
                 try {
                     Map<String, Object> todayAtt = systemStatsService.getAdminTodayAttendanceSummary();
                     if (!hasRealtimeData) {
@@ -276,7 +306,8 @@ public class RealtimeDataFetcher {
             }
 
             // 3. Lớp có tỷ lệ vắng cao nhất
-            if (msg.contains("vắng cao nhất") || msg.contains("tỷ lệ vắng") || msg.contains("nghỉ nhiều nhất")) {
+            if (msg.contains("vắng") || msg.contains("tỷ lệ") || msg.contains("nghỉ nhiều") ||
+                msg.contains("cấm thi") || msg.contains("nguy cơ") || msg.contains("thống kê")) {
                 try {
                     List<Map<String, Object>> highestAbsence = systemStatsService.getClassesWithHighestAbsence();
                     if (!hasRealtimeData) {
@@ -299,7 +330,9 @@ public class RealtimeDataFetcher {
             }
 
             // 4. Thống kê ghi danh theo chương trình
-            if (msg.contains("ghi danh") || msg.contains("chương trình") || msg.contains("theo chương trình")) {
+            if (msg.contains("ghi danh") || msg.contains("chương trình") ||
+                msg.contains("học viên") || msg.contains("học sinh") || msg.contains("danh sách") ||
+                msg.contains("bao nhiêu") || msg.contains("số lượng")) {
                 try {
                     List<Map<String, Object>> progSummary = systemStatsService.getProgramEnrollmentSummary();
                     if (!hasRealtimeData) {
@@ -317,7 +350,8 @@ public class RealtimeDataFetcher {
             }
 
             // 5. Lớp chưa có giảng viên phụ trách
-            if (msg.contains("chưa có giảng viên") || msg.contains("thiếu giảng viên") || msg.contains("chưa phân công")) {
+            if (msg.contains("giảng viên") || msg.contains("phân công") ||
+                msg.contains("thiếu") || msg.contains("chưa")) {
                 try {
                     List<Map<String, Object>> noLecturer = systemStatsService.getClassesWithoutLecturer();
                     if (!hasRealtimeData) {
@@ -343,7 +377,9 @@ public class RealtimeDataFetcher {
         // ═══════════════════════════════════════════════════
         // GENERAL (Student / General) QUERIES
         // ═══════════════════════════════════════════════════
-        if (!isLecturer && !isAdmin) {
+        // GENERAL queries run for ALL roles (Student, Lecturer, Admin)
+        // Provides date info, student count, class start info regardless of role
+        if (true) {
             try {
                 // Current date question
                 if ((msg.contains("hôm nay") || msg.contains("ngày hôm nay") || msg.contains("bây giờ")) &&

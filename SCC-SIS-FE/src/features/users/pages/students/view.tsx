@@ -14,8 +14,6 @@ interface StudentViewProps {
 }
 
 const StudentView: React.FC<StudentViewProps> = ({ student, onClose }) => {
-    alert('Component rendered: ' + student.name); // DEBUG
-    
     const { error: showErrorToast } = useToast();
     const [activeTab, setActiveTab] = useState('info');
     const [enrollments, setEnrollments] = useState<any[]>([]);
@@ -27,7 +25,6 @@ const StudentView: React.FC<StudentViewProps> = ({ student, onClose }) => {
     const loadStudentGrades = async () => {
         try {
             setIsLoadingGrades(true);
-            alert('Calling API for student: ' + student.id); // DEBUG - xóa sau
             const grades = await getStudentGradesByStudentId(parseInt(student.id));
             // Sort by semester and entry date
             grades.sort((a, b) => {
@@ -99,7 +96,6 @@ const StudentView: React.FC<StudentViewProps> = ({ student, onClose }) => {
 
     // Load student's enrollments and grades when component mounts
     useEffect(() => {
-        alert('useEffect triggered! Student: ' + student.name); // DEBUG - xóa sau
         loadEnrollments(); // Load ngay khi mount để có activeEnrollment
         loadStudentGrades(); // Load điểm của học viên
         // eslint-disable-next-line react-hooks/exhaustive-deps

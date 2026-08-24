@@ -47,7 +47,7 @@ services:
       - scc-sis-network
 
   backend:
-    image: huy210205/scc-sis-be:huy2.3
+    image: hphong23/scc-sis-be:latest
     container_name: scc-sis-be
     restart: unless-stopped
     depends_on:
@@ -75,7 +75,7 @@ services:
       start_period: 40s
 
   frontend:
-    image: huy210205/scc-sis-fe:huy2.5
+    image: hphong23/scc-sis-fe:latest
     container_name: scc-sis-fe
     restart: unless-stopped
     depends_on:
