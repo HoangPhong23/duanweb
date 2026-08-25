@@ -21,8 +21,8 @@ async function bootstrap() {
             localStorage.removeItem('kc-callback');
         }
 
-        // Lưu URL hiện tại trước khi Keycloak init (đã xóa dấu / ở cuối)
-        const currentUrl = window.location.origin.replace(/\/$/, '');
+        // Hardcode trực tiếp domain không chứa dấu / ở cuối
+        const currentUrl = 'https://duanweb-sigma.vercel.app';
 
         // init Keycloak, bắt buộc login trước khi render app
         const authenticated = await keycloak.init({
