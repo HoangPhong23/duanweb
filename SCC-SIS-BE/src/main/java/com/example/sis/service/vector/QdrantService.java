@@ -90,8 +90,8 @@ public class QdrantService {
             log.info("Created Qdrant collection: {}", collectionName);
             
         } catch (Exception e) {
-            log.error("Failed to initialize Qdrant collection", e);
-            throw new RuntimeException("Qdrant initialization failed", e);
+            log.warn("⚠️ Bỏ qua Qdrant initialization vì không kết nối được server: {}", e.getMessage());
+            // Đã xóa 'throw new RuntimeException' để tránh làm sập App Spring Boot
         }
     }
     
@@ -122,7 +122,6 @@ public class QdrantService {
             
         } catch (Exception e) {
             log.error("Failed to upsert point to Qdrant: {}", pointId, e);
-            throw new RuntimeException("Qdrant upsert failed", e);
         }
     }
     
@@ -162,7 +161,6 @@ public class QdrantService {
             
         } catch (Exception e) {
             log.error("Failed to batch upsert points to Qdrant", e);
-            throw new RuntimeException("Qdrant batch upsert failed", e);
         }
     }
     
@@ -276,7 +274,6 @@ public class QdrantService {
             
         } catch (Exception e) {
             log.error("❌ Failed to delete all points from Qdrant", e);
-            throw new RuntimeException("Failed to delete all points", e);
         }
     }
     
@@ -341,7 +338,6 @@ public class QdrantService {
                 source.setTitle(payload.has("doc_title") ? payload.get("doc_title").asText() : "Document #" + source.getDocId());
                 
                 String chunkText = payload.get("chunk_text").asText();
-                // Use full chunk text for AI to ensure complete context (3000 chars covers typical chunk size)
                 source.setExcerpt(chunkText.length() > 3000 ? chunkText.substring(0, 3000) + "..." : chunkText);
                 
                 sources.add(source);
