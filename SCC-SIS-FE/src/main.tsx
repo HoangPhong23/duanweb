@@ -21,8 +21,8 @@ async function bootstrap() {
             localStorage.removeItem('kc-callback');
         }
 
-        // Lưu URL hiện tại trước khi Keycloak init
-        const currentUrl = window.location.origin + window.location.pathname;
+        // Lưu URL hiện tại trước khi Keycloak init (đã xóa dấu / ở cuối)
+        const currentUrl = window.location.origin.replace(/\/$/, '');
 
         // init Keycloak, bắt buộc login trước khi render app
         const authenticated = await keycloak.init({
@@ -33,7 +33,7 @@ async function bootstrap() {
         });
 
         if (!authenticated || !keycloak.token) {
-            await keycloak.login();
+            await keycloak.login({ redirectUri: currentUrl });
             return;
         }
 

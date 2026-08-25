@@ -17,7 +17,9 @@ export async function ensureValidToken(minSeconds = 30): Promise<string | null> 
         await keycloak.updateToken(minSeconds);
         return keycloak.token ?? null;
     } catch (error) {
-        await keycloak.login();
+        // Ép redirectUri không chứa dấu / ở cuối
+        const cleanRedirectUri = window.location.origin.replace(/\/$/, '');
+        await keycloak.login({ redirectUri: cleanRedirectUri });
         return keycloak.token ?? null;
     }
 }
