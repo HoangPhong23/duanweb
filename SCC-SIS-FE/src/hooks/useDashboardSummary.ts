@@ -1,9 +1,9 @@
 import useSWR from 'swr';
-import axiosClient from '../shared/api/axiosClient';
+import api from '../shared/api/http';
 
-const fetcher = (url: string) => axiosClient.get(url).then(res => res.data);
+const fetcher = (url: string) => api.get(url).then(res => res.data);
 
-export function useDashboardSummary(centerId?: number) {
+export function useDashboardSummary(centerId?: number | null) {
   const url = centerId 
     ? `/api/v1/dashboard/summary?centerId=${centerId}` 
     : `/api/v1/dashboard/summary`;

@@ -24,7 +24,7 @@ import RecentClasses from '@/features/users/pages/dashboard/components/RecentCla
 
 // Import APIs & Hooks
 import { useUserProfile } from '../../../../stores/userProfile';
-import { useDashboardSummary } from '../../../../../hooks/useDashboardSummary';
+import { useDashboardSummary } from '../../../../hooks/useDashboardSummary';
 
 export default function DashboardPage() {
     const navigate = useNavigate();
