@@ -15,6 +15,7 @@ public class DashboardController {
         this.dashboardService = dashboardService;
     }
 
+    // Endpoint: GET /api/v1/dashboard/summary
     @GetMapping("/summary")
     public ResponseEntity<DashboardSummaryDTO> getSummary(@RequestParam(required = false) Integer centerId) {
         return ResponseEntity.ok(dashboardService.getSummary(centerId));
