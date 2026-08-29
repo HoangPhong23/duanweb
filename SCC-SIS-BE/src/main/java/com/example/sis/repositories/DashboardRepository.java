@@ -13,7 +13,7 @@ public interface DashboardRepository extends JpaRepository<Center, Integer> {
     @Query(value = "SELECT " +
         "(SELECT COUNT(*) FROM centers) AS totalCenters, " +
         "(SELECT COUNT(DISTINCT e.student_id) FROM enrollments e " +
-        " LEFT JOIN classes c ON e.class_id = c.id " +
+        " LEFT JOIN classes c ON e.class_id = c.class_id " +
         " WHERE e.status IN ('ACTIVE', 'PENDING') " +
         " AND (:centerId IS NULL OR c.center_id = :centerId)) AS totalStudents, " +
         "(SELECT COUNT(*) FROM classes c WHERE :centerId IS NULL OR c.center_id = :centerId) AS totalClasses, " +
