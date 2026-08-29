@@ -19,7 +19,7 @@ public interface DashboardRepository extends JpaRepository<Center, Integer> {
         "(SELECT COUNT(*) FROM classes c WHERE :centerId IS NULL OR c.center_id = :centerId) AS totalClasses, " +
         "(SELECT COUNT(*) FROM programs) AS activeCourses, " +
         "(SELECT COUNT(DISTINCT ur.user_id) FROM user_roles ur " +
-        " JOIN roles r ON ur.role_id = r.id " +
+        " JOIN roles r ON ur.role_id = r.role_id " +
         " WHERE r.code = 'LECTURER' " +
         " AND (:centerId IS NULL OR ur.center_id = :centerId)) AS totalLecturers", 
        nativeQuery = true)
