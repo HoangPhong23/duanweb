@@ -17,7 +17,15 @@ public class DashboardController {
 
     // Endpoint: GET /api/v1/dashboard/summary
     @GetMapping("/summary")
-    public ResponseEntity<DashboardSummaryDTO> getSummary(@RequestParam(required = false) Integer centerId) {
+    public ResponseEntity<DashboardSummaryDTO> getSummary(@RequestParam(name = "centerId", required = false) String centerIdParam) {
+        Integer centerId = null;
+        if (centerIdParam != null && !centerIdParam.trim().isEmpty() && !centerIdParam.equalsIgnoreCase("null") && !centerIdParam.equalsIgnoreCase("undefined") && !centerIdParam.equalsIgnoreCase("all")) {
+            try {
+                centerId = Integer.parseInt(centerIdParam.trim());
+            } catch (NumberFormatException e) {
+                // Ignore invalid numbers and treat as null (all centers)
+            }
+        }
         return ResponseEntity.ok(dashboardService.getSummary(centerId));
     }
 }
