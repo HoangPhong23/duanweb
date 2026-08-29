@@ -12,22 +12,19 @@ import {
     UserCheck,
     AlertTriangle,
 } from 'lucide-react';
-import { listClasses } from '../../../../shared/api/classes';
 import { useCenterSelection, useEnsureCenterLoaded } from '../../../../stores/centerSelection';
 
 // Import components
 import Stats from '@/features/users/pages/dashboard/components/stats';
+import DashboardSkeleton from '@/features/users/pages/dashboard/components/DashboardSkeleton';
 import SystemStatus from '@/features/users/pages/dashboard/components/system-status';
 import StudentWarnings from '@/features/users/pages/dashboard/components/StudentWarnings';
 import QuickActions from '@/features/users/pages/dashboard/components/quick-actions';
 import RecentClasses from '@/features/users/pages/dashboard/components/RecentClasses';
 
-// Import APIs
-import { listActiveCenters } from '../../../../shared/api/centers';
-import { listUserViews } from '../../../../shared/api/userViews';
-import { getRoles } from '../../../../shared/api/roles';
-import { getAllStudentsWithEnrollments } from '../../../../shared/api/students';
+// Import APIs & Hooks
 import { useUserProfile } from '../../../../stores/userProfile';
+import { useDashboardSummary } from '../../../../../hooks/useDashboardSummary';
 
 export default function DashboardPage() {
     const navigate = useNavigate();
@@ -35,16 +32,10 @@ export default function DashboardPage() {
     useEnsureCenterLoaded();
     const selectedCenterId = useCenterSelection((s) => s.selectedCenterId);
 
-    // All hooks must be declared before any conditional returns
-    const [isLoaded, setIsLoaded] = useState(false);
-    const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+    // SWR Hook cho cache
+    const { data: summaryData, isLoading: isSummaryLoading } = useDashboardSummary(selectedCenterId);
 
-    // State for API data
-    const [centersCount, setCentersCount] = useState<number>(0);
-    const [activeUsersCount, setActiveUsersCount] = useState<number>(0);
-    const [rolesCount, setRolesCount] = useState<number>(0);
-    const [classesCount, setClassesCount] = useState<number>(0);
-    const [lecturersCount, setLecturersCount] = useState<number>(0);
+    const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
     const [warningsCount, setWarningsCount] = useState<number>(0);
 
     // Redirect students and lecturers to their respective pages
@@ -61,168 +52,7 @@ export default function DashboardPage() {
         }
     }, [me, userLoading, navigate]);
 
-    // Function to fetch dashboard data from APIs
-    const fetchDashboardData = async () => {
-        try {
-            // Add a small delay to ensure authentication is ready
-            await new Promise((resolve) => setTimeout(resolve, 100));
-
-            // Fetch centers count
-            try {
-                const centersResponse = await listActiveCenters();
-
-                if (centersResponse && centersResponse.data) {
-                    const data = centersResponse.data as any;
-
-                    // Handle different response structures
-                    let count = 0;
-                    if (Array.isArray(data)) {
-                        count = data.length;
-                    } else if (data.items && Array.isArray(data.items)) {
-                        count = data.items.length;
-                    } else if (data.total !== undefined) {
-                        count = data.total;
-                    }
-
-                    setCentersCount(count);
-                } else {
-                    setCentersCount(0);
-                }
-            } catch (centersError) {
-                setCentersCount(0);
-            }
-
-            // Fetch students count - only ACTIVE (đang học) and PENDING (đang chờ)
-            // Logic:
-            // - PENDING (đang chờ): học viên chưa vào lớp → đếm tất cả (không phụ thuộc trung tâm)
-            // - ACTIVE (đang học): học viên đang trong lớp → đếm theo trung tâm của lớp
-            try {
-                const [studentsWithEnrollmentsResponse, classesResponse] = await Promise.all([
-                    getAllStudentsWithEnrollments(),
-                    listClasses(selectedCenterId ? { centerId: selectedCenterId } : undefined)
-                ]);
-
-                let count = 0;
-
-                if (studentsWithEnrollmentsResponse && studentsWithEnrollmentsResponse.data) {
-                    const allStudents = studentsWithEnrollmentsResponse.data as any[];
-
-                    // 1. Đếm học viên PENDING (đang chờ) - không phụ thuộc trung tâm
-                    const pendingStudents = allStudents.filter((student: any) => {
-                        return student.overallStatus?.toUpperCase() === 'PENDING';
-                    });
-                    count += pendingStudents.length;
-
-                    // 2. Đếm học viên ACTIVE (đang học) theo trung tâm của lớp
-                    if (classesResponse && classesResponse.data) {
-                        const classesData = classesResponse.data as any;
-                        const classes = Array.isArray(classesData) 
-                            ? classesData 
-                            : classesData.items || [];
-
-                        // Tạo Map: classId -> class để tra cứu nhanh
-                        const classMap = new Map();
-                        classes.forEach((cls: any) => {
-                            classMap.set(cls.classId, cls);
-                        });
-
-                        // Đếm học viên có enrollment ACTIVE trong các lớp đã filter
-                        const activeStudentIds = new Set<number>();
-                        allStudents.forEach((student: any) => {
-                            if (student.enrollments && Array.isArray(student.enrollments)) {
-                                student.enrollments.forEach((enrollment: any) => {
-                                    // Kiểm tra enrollment có status ACTIVE và thuộc lớp đã filter
-                                    if (enrollment.status?.toUpperCase() === 'ACTIVE' && 
-                                        classMap.has(enrollment.classId)) {
-                                        activeStudentIds.add(student.studentId);
-                                    }
-                                });
-                            }
-                        });
-
-                        count += activeStudentIds.size;
-                    }
-                }
-
-                setActiveUsersCount(count);
-            } catch (usersError) {
-                setActiveUsersCount(0);
-            }
-
-            // Fetch roles count
-            try {
-                const rolesResponse = await getRoles();
-
-                if (rolesResponse && rolesResponse.data) {
-                    const data = rolesResponse.data as any;
-
-                    // Handle different response structures
-                    let count = 0;
-                    if (Array.isArray(data)) {
-                        count = data.length;
-                    } else if (data.items && Array.isArray(data.items)) {
-                        count = data.items.length;
-                    } else if (data.total !== undefined) {
-                        count = data.total;
-                    }
-
-                    setRolesCount(count);
-                } else {
-                    setRolesCount(0);
-                }
-            } catch (rolesError) {
-                setRolesCount(0);
-            }
-
-            // Fetch classes count filtered by selected center if any
-            try {
-                const classesRes = await listClasses(selectedCenterId ? { centerId: selectedCenterId } : undefined);
-                if (classesRes && classesRes.data) {
-                    const data = classesRes.data as any;
-                    let count = 0;
-                    if (Array.isArray(data)) count = data.length;
-                    else if (data.items && Array.isArray(data.items)) count = data.items.length;
-                    else if (data.total !== undefined) count = data.total;
-                    setClassesCount(count);
-                } else {
-                    setClassesCount(0);
-                }
-            } catch (err) {
-                setClassesCount(0);
-            }
-
-            // Fetch lecturers count filtered by selected center
-            try {
-                const lecturersRes = await listUserViews(
-                    selectedCenterId ? { centerId: selectedCenterId, roleCode: 'LECTURER' } : { roleCode: 'LECTURER' },
-                );
-                if (lecturersRes && lecturersRes.data) {
-                    const data = lecturersRes.data as any;
-                    let count = 0;
-                    if (Array.isArray(data)) count = data.length;
-                    else if (data.items && Array.isArray(data.items)) count = data.items.length;
-                    else if (data.total !== undefined) count = data.total;
-                    setLecturersCount(count);
-                } else {
-                    setLecturersCount(0);
-                }
-            } catch (err) {
-                setLecturersCount(0);
-            }
-
-            // Fetch warnings count - Will be set by StudentWarnings component via onCountChange callback
-            setWarningsCount(0); // Initial value, will be updated by StudentWarnings
-        } catch (error) {
-            // Set default values in case of error (based on actual API responses)
-            setCentersCount(5);
-            setActiveUsersCount(20); // Updated to match UsersPage
-            setRolesCount(7);
-        }
-    };
-
     useEffect(() => {
-        setIsLoaded(true);
-
         // Load background image from settings
         const savedAppearance = localStorage.getItem('appearanceSettings');
         if (savedAppearance) {
@@ -232,20 +62,6 @@ export default function DashboardPage() {
             }
         }
 
-        // Fetch dashboard data from APIs
-        fetchDashboardData();
-    }, []);
-
-    // Refetch when center changes
-    useEffect(() => {
-        if (isLoaded) {
-            fetchDashboardData();
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedCenterId]);
-
-    // Listen for changes in appearance settings
-    useEffect(() => {
         const handleStorageChange = () => {
             const savedAppearance = localStorage.getItem('appearanceSettings');
             if (savedAppearance) {
@@ -261,8 +77,8 @@ export default function DashboardPage() {
     const stats = [
         {
             label: 'Tổng số học viên',
-            value: activeUsersCount.toString(),
-            sub: `${activeUsersCount} hồ sơ học viên`,
+            value: summaryData?.totalStudents?.toString() || '0',
+            sub: `${summaryData?.totalStudents || 0} hồ sơ học viên`,
             change: null,
             changeType: 'neutral' as const,
             icon: Users as React.ComponentType<{ size?: number }>,
@@ -273,8 +89,8 @@ export default function DashboardPage() {
         },
         {
             label: 'Trung tâm',
-            value: centersCount.toString(),
-            sub: `${centersCount} trung tâm hoạt động`,
+            value: summaryData?.totalCenters?.toString() || '0',
+            sub: `${summaryData?.totalCenters || 0} trung tâm hoạt động`,
             change: null,
             changeType: 'neutral' as const,
             icon: Building2 as React.ComponentType<{ size?: number }>,
@@ -285,8 +101,8 @@ export default function DashboardPage() {
         },
         {
             label: 'Lớp đang hoạt động',
-            value: classesCount.toString(),
-            sub: `${classesCount} lớp đang hoạt động`,
+            value: summaryData?.totalClasses?.toString() || '0',
+            sub: `${summaryData?.totalClasses || 0} lớp đang hoạt động`,
             change: null,
             changeType: 'neutral' as const,
             icon: BookOpen as React.ComponentType<{ size?: number }>,
@@ -297,8 +113,8 @@ export default function DashboardPage() {
         },
         {
             label: 'Giảng viên',
-            value: lecturersCount.toString(),
-            sub: `${lecturersCount} giảng viên`,
+            value: summaryData?.totalLecturers?.toString() || '0',
+            sub: `${summaryData?.totalLecturers || 0} giảng viên`,
             change: null,
             changeType: 'neutral' as const,
             icon: UserCheck as React.ComponentType<{ size?: number }>,
@@ -330,7 +146,6 @@ export default function DashboardPage() {
         },
     ];
 
-    // Show loading while checking user role
     if (userLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -354,12 +169,9 @@ export default function DashboardPage() {
                 backgroundAttachment: 'fixed',
             }}
         >
-            {/* Background Overlay */}
             {backgroundImage && <div className="fixed inset-0 bg-black/20 pointer-events-none z-0"></div>}
 
-            {/* Content */}
             <div className="relative z-20">
-                {/* Page Title */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-gray-900">Dashboard Trung tâm</h1>
                     <p className="text-gray-600 mt-1">
@@ -367,14 +179,17 @@ export default function DashboardPage() {
                     </p>
                 </div>
 
-                {/* Stats */}
-                <div className="mb-12 relative z-20">
-                    <Stats stats={stats} isLoaded={isLoaded} />
-                </div>
-                {/* Quick actions + Recent classes */}
+                {isSummaryLoading ? (
+                    <DashboardSkeleton />
+                ) : (
+                    <div className="mb-12 relative z-20">
+                        <Stats stats={stats} isLoaded={true} />
+                    </div>
+                )}
+
                 <div className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-6 relative z-20">
                     <QuickActions
-                        isLoaded={isLoaded}
+                        isLoaded={true}
                         actions={[
                             {
                                 label: 'Thêm học viên',
@@ -405,14 +220,12 @@ export default function DashboardPage() {
                     <RecentClasses />
                 </div>
 
-                {/* Student Warnings */}
                 <div className="mb-8 relative z-20">
                     <StudentWarnings onCountChange={(c) => setWarningsCount(c)} />
                 </div>
 
-                {/* System Status */}
                 <div className="mb-8 relative z-20">
-                    <SystemStatus services={systemServices} isLoaded={isLoaded} />
+                    <SystemStatus services={systemServices} isLoaded={true} />
                 </div>
             </div>
         </div>
