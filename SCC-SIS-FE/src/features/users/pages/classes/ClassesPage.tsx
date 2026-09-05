@@ -479,8 +479,9 @@ export default function ClassesPage() {
                     }
                 }
 
-                // Fetch student counts and instructors for all classes in background
-                const studentCountPromises = mappedClasses.map(async (cls) => {
+                // Chỉ fetch sĩ số và giảng viên cho các lớp ở trang hiện tại (6 lớp) để tránh spam hàng chục request làm nghẽn mạng
+                const visibleClasses = mappedClasses.slice(0, classesPerPage);
+                const studentCountPromises = visibleClasses.map(async (cls) => {
                     try {
                         const res = await getClassStudents(parseInt(cls.id, 10), {
                             status: 'ACTIVE',
@@ -502,7 +503,7 @@ export default function ClassesPage() {
                     }
                 });
 
-                const instructorPromises = mappedClasses.map(async (cls) => {
+                const instructorPromises = visibleClasses.map(async (cls) => {
                     try {
                         const res = await http.get(`/api/classes/${cls.id}/lecturers`);
                         const apiData: any[] = res.data.items || [];
