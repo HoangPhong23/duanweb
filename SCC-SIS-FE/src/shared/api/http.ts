@@ -62,7 +62,7 @@ interface CacheEntry {
 
 const apiCache = new Map<string, CacheEntry>();
 const pendingRequests = new Map<string, Promise<any>>();
-const CACHE_TTL_MS = 60 * 1000; // Cache 60 giây cho mỗi trang
+const CACHE_TTL_MS = 5 * 60 * 1000; // Cache 5 phút (300,000ms) để khi quay lại trang luôn hiển thị tức thì (0ms)
 
 // Tạo key định danh cho request dựa trên URL và Params
 function getCacheKey(config: any): string {

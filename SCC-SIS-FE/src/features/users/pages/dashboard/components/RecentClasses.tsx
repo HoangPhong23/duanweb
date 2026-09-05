@@ -26,54 +26,57 @@ export default function RecentClasses() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
     const run = async () => {
-      setLoading(true);
       try {
-        const [classesRes, studentsRes] = await Promise.all([
-          listClasses(selectedCenterId ? { centerId: selectedCenterId } : undefined),
-          getAllStudentsWithEnrollments()
-        ]);
-
+        const classesRes = await listClasses(selectedCenterId ? { centerId: selectedCenterId } : undefined);
         const data = Array.isArray(classesRes.data) ? classesRes.data : [];
-        const allStudents = studentsRes?.data || [];
+        if (!isMounted) return;
 
-        // Tính số học viên ACTIVE cho mỗi lớp
-        const classesWithCount = data.map(cls => {
-          let activeCount = 0;
-          if (Array.isArray(allStudents)) {
-            allStudents.forEach((student: any) => {
-              if (student.enrollments && Array.isArray(student.enrollments)) {
-                const hasActiveEnrollment = student.enrollments.some((enrollment: any) => 
-                  enrollment.classId === cls.classId && 
-                  enrollment.status?.toUpperCase() === 'ACTIVE'
-                );
-                if (hasActiveEnrollment) {
-                  activeCount++;
-                }
-              }
-            });
-          }
-          return { ...cls, activeStudentCount: activeCount };
-        });
-
-        // Sắp xếp: Ưu tiên PLANNED (sắp khai giảng) trước, sau đó ONGOING (đang học)
-        // Nếu nhiều lớp cùng trạng thái thì sắp xếp theo startDate gần nhất
-        const sorted = classesWithCount.sort((a, b) => {
-          const prio = (s: ClassStatus) => (s === 'PLANNED' ? 0 : s === 'ONGOING' ? 1 : 2);
+        // Hiển thị ngay danh sách lớp gần đây với count tạm thời là 0
+        const initialClasses = data.map((cls) => ({ ...cls, activeStudentCount: 0 }));
+        const prio = (s: ClassStatus) => (s === 'PLANNED' ? 0 : s === 'ONGOING' ? 1 : 2);
+        initialClasses.sort((a, b) => {
           const d = prio(a.status) - prio(b.status);
           if (d !== 0) return d;
           const getDate = (c: ClassDto) => new Date(c.startDate || c.createdAt).getTime();
           return getDate(a) - getDate(b);
         });
-        
-        setClasses(sorted.slice(0, 3));
-      } catch (e) {
-        setClasses([]);
-      } finally {
+        setClasses(initialClasses.slice(0, 3));
         setLoading(false);
+
+        // Tính toán số học viên active ở background mà không khóa giao diện
+        getAllStudentsWithEnrollments().then((studentsRes) => {
+          if (!isMounted) return;
+          const allStudents = studentsRes?.data || [];
+          if (Array.isArray(allStudents)) {
+            setClasses((prev) =>
+              prev.map((cls) => {
+                let activeCount = 0;
+                allStudents.forEach((student: any) => {
+                  if (student.enrollments && Array.isArray(student.enrollments)) {
+                    const hasActive = student.enrollments.some(
+                      (e: any) => e.classId === cls.classId && e.status?.toUpperCase() === 'ACTIVE'
+                    );
+                    if (hasActive) activeCount++;
+                  }
+                });
+                return { ...cls, activeStudentCount: activeCount };
+              })
+            );
+          }
+        }).catch(() => {});
+      } catch (e) {
+        if (isMounted) {
+          setClasses([]);
+          setLoading(false);
+        }
       }
     };
     run();
+    return () => {
+      isMounted = false;
+    };
   }, [selectedCenterId]);
 
   const items = useMemo(() => classes, [classes]);

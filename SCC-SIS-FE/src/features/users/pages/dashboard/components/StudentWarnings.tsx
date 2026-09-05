@@ -40,12 +40,13 @@ export default function StudentWarnings({ onCountChange }: Props) {
     const [warnings, setWarnings] = useState<StudentWarning[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Fetch warnings từ API
+    // Fetch warnings từ API (trì hoãn 100ms để Dashboard chính render lập tức không bị khựng)
     useEffect(() => {
-        const fetchWarnings = async () => {
+        let isMounted = true;
+        const timer = setTimeout(async () => {
             try {
-                setLoading(true);
                 const response = await studentWarningsApi.getStudentWarnings(selectedCenterId);
+                if (!isMounted) return;
                 // Map warnings với action label
                 const mappedWarnings = response.warnings.map((w) => ({
                     ...w,
@@ -55,12 +56,15 @@ export default function StudentWarnings({ onCountChange }: Props) {
                 onCountChange?.(response.totalCount);
             } catch (error) {
             } finally {
-                setLoading(false);
+                if (isMounted) setLoading(false);
             }
-        };
+        }, 100);
 
-        fetchWarnings();
-    }, [selectedCenterId]); // Remove onCountChange from deps to prevent unnecessary re-fetches
+        return () => {
+            isMounted = false;
+            clearTimeout(timer);
+        };
+    }, [selectedCenterId]);
 
     return (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
