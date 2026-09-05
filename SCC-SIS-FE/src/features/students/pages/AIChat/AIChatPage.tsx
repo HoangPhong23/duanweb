@@ -900,7 +900,7 @@ export default function AIChatPage() {
                                     }}
                                 />
                                 <button
-                                    onClick={handleSendMessage}
+                                    onClick={() => handleSendMessage()}
                                     disabled={isLoading || !inputValue.trim()}
                                     className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white transition-all hover:from-blue-700 hover:to-blue-800 disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md hover:shadow-lg"
                                     aria-label="Gửi tin nhắn"

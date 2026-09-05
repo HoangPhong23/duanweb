@@ -106,7 +106,7 @@ export default function AIAssistant({ className = '' }: AIAssistantProps) {
             // Load session details (should be empty initially)
             const details = await getChatSessionDetails(session.sessionId);
             const formattedMessages: AIChatMessage[] = (details.messages || []).map((msg: ChatMessageResponse) => ({
-                role: msg.role || 'assistant',
+                role: (msg.role === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
                 content: msg.message,
                 timestamp: msg.timestamp,
             }));
@@ -723,7 +723,7 @@ export default function AIAssistant({ className = '' }: AIAssistantProps) {
                                 aria-label="Nhập tin nhắn"
                             />
                             <button
-                                onClick={handleSendMessage}
+                                onClick={() => handleSendMessage()}
                                 disabled={isLoading || !inputValue.trim()}
                                 className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                                 aria-label="Gửi tin nhắn"

@@ -464,6 +464,8 @@ export default function ClassesPage() {
                 const mappedClasses = classesRes.data.map(mapClassDtoToUI);
                 setClasses(mappedClasses);
                 setPrograms(programsRes.data);
+                // Tắt spinner ngay khi có danh sách lớp để người dùng thấy giao diện tức thì (~0.1s - 0.2s)
+                setIsLoading(false);
 
                 // Only fetch centers if user has GLOBAL scope
                 if (hasGlobalScope) {
@@ -477,7 +479,7 @@ export default function ClassesPage() {
                     }
                 }
 
-                // Fetch student counts and instructors for all classes in parallel
+                // Fetch student counts and instructors for all classes in background
                 const studentCountPromises = mappedClasses.map(async (cls) => {
                     try {
                         const res = await getClassStudents(parseInt(cls.id, 10), {
@@ -523,7 +525,7 @@ export default function ClassesPage() {
                     Promise.all(instructorPromises),
                 ]);
 
-                // Update classes with student counts and instructors
+                // Update classes with student counts and instructors in background
                 setClasses((prev) =>
                     prev.map((cls) => {
                         const countData = studentCounts.find((sc) => sc.classId === cls.id);

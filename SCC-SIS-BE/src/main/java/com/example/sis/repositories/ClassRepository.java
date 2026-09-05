@@ -15,8 +15,11 @@ public interface ClassRepository extends JpaRepository<ClassEntity, Integer> {
     /**
      * Lấy danh sách lớp học theo trung tâm và chưa bị soft delete
      * Sắp xếp theo ngày bắt đầu và ID (cho pagination seek-friendly)
+     * JOIN FETCH center, program, createdBy để tránh N+1 Query
      */
     @Query("SELECT c FROM ClassEntity c " +
+            "JOIN FETCH c.center JOIN FETCH c.program " +
+            "LEFT JOIN FETCH c.createdBy LEFT JOIN FETCH c.updatedBy " +
             "WHERE c.center.centerId = :centerId AND c.deletedAt IS NULL " +
             "ORDER BY c.startDate DESC, c.classId DESC")
     List<ClassEntity> findByCenterIdOrderByStartDateDesc(@Param("centerId") Integer centerId);
@@ -24,39 +27,54 @@ public interface ClassRepository extends JpaRepository<ClassEntity, Integer> {
     /**
      * Lấy tất cả lớp học chưa bị soft delete (cho Super Admin)
      * Sắp xếp theo ngày bắt đầu và ID
+     * JOIN FETCH center, program, createdBy để tránh N+1 Query
      */
     @Query("SELECT c FROM ClassEntity c " +
+            "JOIN FETCH c.center JOIN FETCH c.program " +
+            "LEFT JOIN FETCH c.createdBy LEFT JOIN FETCH c.updatedBy " +
             "WHERE c.deletedAt IS NULL " +
             "ORDER BY c.startDate DESC, c.classId DESC")
     List<ClassEntity> findAllOrderByStartDateDesc();
 
     /**
      * Lấy lớp học theo ID và chưa bị soft delete
+     * JOIN FETCH center, program, createdBy để tránh N+1 Query
      */
     @Query("SELECT c FROM ClassEntity c " +
+            "JOIN FETCH c.center JOIN FETCH c.program " +
+            "LEFT JOIN FETCH c.createdBy LEFT JOIN FETCH c.updatedBy " +
             "WHERE c.classId = :classId AND c.deletedAt IS NULL")
     Optional<ClassEntity> findByIdAndNotDeleted(@Param("classId") Integer classId);
 
     /**
      * Lấy danh sách lớp học theo chương trình học
+     * JOIN FETCH center, program, createdBy để tránh N+1 Query
      */
     @Query("SELECT c FROM ClassEntity c " +
+            "JOIN FETCH c.center JOIN FETCH c.program " +
+            "LEFT JOIN FETCH c.createdBy LEFT JOIN FETCH c.updatedBy " +
             "WHERE c.program.programId = :programId AND c.deletedAt IS NULL " +
             "ORDER BY c.startDate DESC, c.classId DESC")
     List<ClassEntity> findByProgramIdOrderByStartDateDesc(@Param("programId") Integer programId);
 
     /**
      * Lấy danh sách lớp học theo trạng thái
+     * JOIN FETCH center, program, createdBy để tránh N+1 Query
      */
     @Query("SELECT c FROM ClassEntity c " +
+            "JOIN FETCH c.center JOIN FETCH c.program " +
+            "LEFT JOIN FETCH c.createdBy LEFT JOIN FETCH c.updatedBy " +
             "WHERE c.status = :status AND c.deletedAt IS NULL " +
             "ORDER BY c.startDate DESC, c.classId DESC")
     List<ClassEntity> findByStatusOrderByStartDateDesc(@Param("status") ClassEntity.ClassStatus status);
 
     /**
      * Lấy danh sách lớp học theo trung tâm và trạng thái
+     * JOIN FETCH center, program, createdBy để tránh N+1 Query
      */
     @Query("SELECT c FROM ClassEntity c " +
+            "JOIN FETCH c.center JOIN FETCH c.program " +
+            "LEFT JOIN FETCH c.createdBy LEFT JOIN FETCH c.updatedBy " +
             "WHERE c.center.centerId = :centerId AND c.status = :status AND c.deletedAt IS NULL " +
             "ORDER BY c.startDate DESC, c.classId DESC")
     List<ClassEntity> findByCenterIdAndStatusOrderByStartDateDesc(
@@ -104,8 +122,11 @@ public interface ClassRepository extends JpaRepository<ClassEntity, Integer> {
     /**
      * Lấy danh sách lớp học mà giảng viên được phân công
      * Lọc các assignment đang hiệu lực (end_date IS NULL hoặc end_date >= ngày hiện tại)
+     * JOIN FETCH center, program, createdBy để tránh N+1 Query
      */
     @Query("SELECT DISTINCT c FROM ClassEntity c " +
+            "JOIN FETCH c.center JOIN FETCH c.program " +
+            "LEFT JOIN FETCH c.createdBy LEFT JOIN FETCH c.updatedBy " +
             "JOIN c.classTeachers ct " +
             "WHERE ct.teacher.userId = :lecturerId " +
             "AND (ct.endDate IS NULL OR ct.endDate >= CURRENT_DATE) " +
