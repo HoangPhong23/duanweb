@@ -112,12 +112,6 @@ api.interceptors.request.use(async (config) => {
 
     const cacheKey = getCacheKey(config);
 
-    // 1. Deduplication: Nếu request đang được gọi, trả về cùng 1 Promise
-    if (pendingRequests.has(cacheKey)) {
-        config.adapter = () => pendingRequests.get(cacheKey)!;
-        return config;
-    }
-
     // 2. Cache & Stale-While-Revalidate (SWR)
     const cached = apiCache.get(cacheKey);
     if (cached) {
@@ -141,21 +135,6 @@ api.interceptors.request.use(async (config) => {
             });
             return config;
         }
-    }
-
-    // 3. Track request để deduplicate các call tiếp theo
-    const originalAdapter = config.adapter || axios.defaults.adapter;
-    if (originalAdapter) {
-        config.adapter = async (cfg) => {
-            // @ts-ignore
-            const promise = originalAdapter(cfg);
-            pendingRequests.set(cacheKey, promise);
-            try {
-                return await promise;
-            } finally {
-                pendingRequests.delete(cacheKey);
-            }
-        };
     }
 
     return config;
