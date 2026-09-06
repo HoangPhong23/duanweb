@@ -809,7 +809,9 @@ public class StudentServiceImpl implements StudentService {
     public List<java.util.Map<String, Object>> getAllStudentWarnings(Integer centerId) {
         List<java.util.Map<String, Object>> allWarnings = new ArrayList<>();
         
-        List<Object[]> rawData = studentRepo.findStudentWarningsAggregate(centerId);
+        List<Object[]> rawData = centerId == null 
+            ? studentRepo.findStudentWarningsAggregateAll() 
+            : studentRepo.findStudentWarningsAggregateByCenter(centerId);
         
         for (Object[] row : rawData) {
             Integer studentId = ((Number) row[0]).intValue();
