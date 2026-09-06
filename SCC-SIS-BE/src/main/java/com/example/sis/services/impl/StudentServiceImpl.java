@@ -746,6 +746,23 @@ public class StudentServiceImpl implements StudentService {
                 .collect(Collectors.toList());
     }
 
+    private StudentWithEnrollmentsResponse toStudentWithEnrollmentsResponse(Student student) {
+        List<com.example.sis.models.Enrollment> enrollmentsRaw = enrollmentRepo.findByStudent_StudentIdAndRevokedAtIsNull(student.getStudentId());
+        List<StudentWithEnrollmentsResponse.EnrollmentDetail> enrollments = enrollmentsRaw.stream()
+                .map(e -> new StudentWithEnrollmentsResponse.EnrollmentDetail(
+                        e.getEnrollmentId(), 
+                        e.getClassEntity().getClassId(),
+                        e.getClassEntity().getName(), 
+                        e.getClassEntity().getProgram() != null ? e.getClassEntity().getProgram().getName() : null,
+                        e.getStatus().name(),
+                        e.getEnrolledAt(), 
+                        e.getLeftAt(),
+                        e.getNote()
+                ))
+                .collect(Collectors.toList());
+        return toStudentWithEnrollmentsResponseFast(student, enrollments);
+    }
+
     private StudentWithEnrollmentsResponse toStudentWithEnrollmentsResponseFast(Student student, List<StudentWithEnrollmentsResponse.EnrollmentDetail> enrollments) {
         StudentWithEnrollmentsResponse response = new StudentWithEnrollmentsResponse();
         

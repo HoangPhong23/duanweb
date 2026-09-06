@@ -417,7 +417,7 @@ public class ClassService {
                     if (ct.getTeacher() != null) {
                         u.setUserId(ct.getTeacher().getUserId());
                         u.setFullName(ct.getTeacher().getFullName());
-                        u.setAvatarUrl(ct.getTeacher().getAvatarUrl());
+                        
                         // Có thể dùng assignmentId nếu cần id của class_teachers (frontend cần id assignment thay vì user id?)
                         // Frontend hiện map "id" sang assignmentId (item.assignmentId) hoặc lecturer.id, 
                         // nhưng chúng ta có thể truyền role/assignmentId bổ sung nếu cần
