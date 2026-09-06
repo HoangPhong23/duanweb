@@ -145,24 +145,21 @@ export default function UsersPage() {
         }
     };
 
-    // gọi ngay khi mount & mỗi khi filter đổi
+    const [debouncedQuery, setDebouncedQuery] = useState(query);
+    
+    // debounce search 300ms
+    useEffect(() => {
+        const t = setTimeout(() => setDebouncedQuery(query), 300);
+        return () => clearTimeout(t);
+    }, [query]);
+
+    // gọi khi mount & mỗi khi filter đổi
     useEffect(() => {
         fetchUsers();
         fetchRoleStats();
         setPage(1);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedCenterId, selectedRoleCode]);
-
-    // debounce search 300ms
-    useEffect(() => {
-        const t = setTimeout(() => {
-            fetchUsers();
-            fetchRoleStats();
-            setPage(1);
-        }, 300);
-        return () => clearTimeout(t);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [query]);
+    }, [selectedCenterId, selectedRoleCode, debouncedQuery]);
 
     // client-side pagination tạm thời
     const totalPages = Math.max(1, Math.ceil(users.length / pageSize));

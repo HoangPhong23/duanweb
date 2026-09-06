@@ -10,6 +10,9 @@ import com.example.sis.utils.RoleScopeUtil;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+
 
 import java.util.List;
 
@@ -51,6 +54,7 @@ public class AuthzService {
     // ===================== ROLE-LEVEL CHECKS =====================
 
     /** Kiểm tra có role code cụ thể không */
+    @Cacheable(value = "authzCache", key = "#root.methodName + '-' + #root.target.getCurrentUserId(#authentication) + '-' + #roleCode")
     public boolean hasRole(Authentication authentication, String roleCode) {
         String sub = getSub(authentication);
         if (sub == null) return false;
@@ -76,6 +80,7 @@ public class AuthzService {
      * 
      * Ví dụ sử dụng: @PreAuthorize("@authz.hasPermission(authentication, 'USER_CREATE')")
      */
+    @Cacheable(value = "authzCache", key = "#root.methodName + '-' + #root.target.getCurrentUserId(#authentication) + '-' + #permissionCode")
     public boolean hasPermission(Authentication authentication, String permissionCode) {
         if (authentication == null || permissionCode == null || permissionCode.isBlank()) {
             return false;
@@ -122,6 +127,7 @@ public class AuthzService {
      * - SA luôn pass
      * - Ngược lại: cần CENTER_MANAGER tại center đó
      */
+    @Cacheable(value = "authzCache", key = "#root.methodName + '-' + #root.target.getCurrentUserId(#authentication) + '-' + #centerId")
     public boolean hasCenterAccess(Authentication authentication, Integer centerId) {
         String sub = getSub(authentication);
         if (sub == null) return false;
@@ -137,6 +143,7 @@ public class AuthzService {
      * - SA luôn pass
      * - Ngược lại: cần ACADEMIC_STAFF hoặc CENTER_MANAGER tại center đó
      */
+    @Cacheable(value = "authzCache", key = "#root.methodName + '-' + #root.target.getCurrentUserId(#authentication) + '-' + #centerId")
     public boolean hasAcademicAccess(Authentication authentication, Integer centerId) {
         String sub = getSub(authentication);
         if (sub == null) return false;

@@ -13,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.parameters.P;   // <-- IMPORTANT
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.cache.annotation.CacheEvict;
 
 import java.util.List;
 
@@ -33,6 +34,7 @@ public class UserRoleController {
     /** Assign ONE role. */
     @PostMapping
     @PreAuthorize("@authz.canAssignUserRole(authentication, #req.roleId, #req.centerId)")
+    @CacheEvict(value = "authzCache", allEntries = true)
     public ResponseEntity<UserRoleResponse> assignRoleToUser(
             @P("req") @Valid @RequestBody UserRoleRequest request,
             @AuthenticationPrincipal Jwt jwt
@@ -49,6 +51,7 @@ public class UserRoleController {
      */
     @PostMapping("/user/{userId}")
     @PreAuthorize("@authz.canAssignUserRoles(authentication, #items)")
+    @CacheEvict(value = "authzCache", allEntries = true)
     public ResponseEntity<UserRoleAssignmentSummaryResponse> assignRolesToUserWithSummary(
             @PathVariable Integer userId,
             @P("items") @RequestBody List<UserRoleRequest> requests,
@@ -67,6 +70,7 @@ public class UserRoleController {
     /** Revoke ONE (soft). */
     @DeleteMapping("/{userRoleId}")
     @PreAuthorize("@authz.canModifyUserRole(authentication, #userRoleId)")
+    @CacheEvict(value = "authzCache", allEntries = true)
     public ResponseEntity<Void> revokeRoleFromUser(
             @PathVariable Integer userRoleId,
             @AuthenticationPrincipal Jwt jwt
@@ -78,6 +82,7 @@ public class UserRoleController {
     /** Revoke MANY (bulk, SA only). */
     @DeleteMapping
     @PreAuthorize("@authz.isSuperAdmin(authentication)")
+    @CacheEvict(value = "authzCache", allEntries = true)
     public ResponseEntity<Void> revokeRolesFromUsers(
             @RequestBody List<Integer> userRoleIds,
             @AuthenticationPrincipal Jwt jwt
