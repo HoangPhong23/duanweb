@@ -382,17 +382,6 @@ public class ClassService {
             calculatedStatus = ClassEntity.ClassStatus.ONGOING;
         }
         
-        // Nếu lớp vừa chuyển sang FINISHED, tự động tốt nghiệp tất cả học viên
-        if (calculatedStatus == ClassEntity.ClassStatus.FINISHED && 
-            classEntity.getStatus() != ClassEntity.ClassStatus.FINISHED) {
-            try {
-                statusManagementService.autoGraduateClassStudents(classEntity.getClassId(), null);
-                System.out.println("Đã tự động tốt nghiệp học viên trong lớp " + classEntity.getClassId());
-            } catch (Exception e) {
-                System.err.println("Lỗi khi tự động tốt nghiệp học viên: " + e.getMessage());
-            }
-        }
-        
         return calculatedStatus;
     }
 
@@ -417,6 +406,28 @@ public class ClassService {
         
         response.setRoom(classEntity.getRoom());
         response.setCapacity(classEntity.getCapacity());
+        response.setStudentCount(classEntity.getActiveStudentCount() != null ? classEntity.getActiveStudentCount() : 0);
+        
+        if (classEntity.getClassTeachers() != null) {
+            java.time.LocalDate today = java.time.LocalDate.now();
+            response.setInstructors(classEntity.getClassTeachers().stream()
+                .filter(ct -> ct.getEndDate() == null || !ct.getEndDate().isBefore(today))
+                .map(ct -> {
+                    com.example.sis.dtos.users.UserLiteResponse u = new com.example.sis.dtos.users.UserLiteResponse();
+                    if (ct.getTeacher() != null) {
+                        u.setUserId(ct.getTeacher().getUserId());
+                        u.setFullName(ct.getTeacher().getFullName());
+                        u.setAvatarUrl(ct.getTeacher().getAvatarUrl());
+                        // Có thể dùng assignmentId nếu cần id của class_teachers (frontend cần id assignment thay vì user id?)
+                        // Frontend hiện map "id" sang assignmentId (item.assignmentId) hoặc lecturer.id, 
+                        // nhưng chúng ta có thể truyền role/assignmentId bổ sung nếu cần
+                    }
+                    return u;
+                })
+                .collect(Collectors.toList()));
+        } else {
+            response.setInstructors(new java.util.ArrayList<>());
+        }
         response.setStudyDays(classEntity.getStudyDays());
         response.setStudyTime(classEntity.getStudyTime());
         response.setCreatedAt(classEntity.getCreatedAt());

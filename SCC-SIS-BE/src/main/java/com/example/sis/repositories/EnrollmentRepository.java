@@ -152,4 +152,13 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Integer>
         ORDER BY e.student.fullName
         """)
     List<Enrollment> findByClassEntity_ClassIdAndDeletedFalse(@org.springframework.data.repository.query.Param("classId") Integer classId);
+
+    @Query("""
+        SELECT e.enrollmentId, e.classEntity.classId, c.name, c.program.name, CAST(e.status AS string), e.enrolledAt, e.leftAt, e.note, e.student.studentId
+        FROM Enrollment e
+        JOIN e.classEntity c
+        WHERE e.revokedAt IS NULL AND e.status = 'ACTIVE'
+        ORDER BY e.enrolledAt DESC
+        """)
+    List<Object[]> findAllActiveEnrollmentsWithClassInfo();
 }

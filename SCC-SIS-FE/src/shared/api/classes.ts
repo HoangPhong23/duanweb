@@ -71,6 +71,12 @@ export type ClassDto = {
     updatedAt: string;
     createdBy: number | null;
     updatedBy: number | null;
+    studentCount: number;
+    instructors: {
+        userId: number;
+        fullName: string;
+        avatarUrl?: string;
+    }[];
 };
 
 export type ClassLiteDto = {

@@ -154,9 +154,14 @@ const mapClassDtoToUI = (dto: ClassDto): Class => {
         endDate: dto.endDate || '',
         schedule: formatSchedule(dto.studyDays, dto.studyTime),
         location: dto.room || '',
-        students: 0, // TODO: Get from enrollment API
+        students: dto.studentCount || 0,
         maxStudents: dto.capacity || 0,
-        instructors: [], // TODO: Get from lecturer API
+        instructors: (dto.instructors || []).map(i => ({
+            id: String(i.userId),
+            name: i.fullName,
+            initial: i.fullName.charAt(0).toUpperCase(),
+            avatar: i.avatarUrl,
+        })),
         status: mapStatusToUI(dto.status),
         studyDays: dto.studyDays || undefined,
         studyTime: dto.studyTime || undefined,
@@ -479,65 +484,7 @@ export default function ClassesPage() {
                     }
                 }
 
-                // Chỉ fetch sĩ số và giảng viên cho các lớp ở trang hiện tại (6 lớp) để tránh spam hàng chục request làm nghẽn mạng
-                const visibleClasses = mappedClasses.slice(0, classesPerPage);
-                const studentCountPromises = visibleClasses.map(async (cls) => {
-                    try {
-                        const res = await getClassStudents(parseInt(cls.id, 10), {
-                            status: 'ACTIVE',
-                            page: 0,
-                            size: 1,
-                        });
-                        let activeCount = 0;
-                        const data: any = res.data;
-                        if (data && typeof data.totalElements === 'number') {
-                            activeCount = data.totalElements;
-                        } else if (data && Array.isArray(data)) {
-                            activeCount = data.filter((e: any) => e.status === 'ACTIVE').length;
-                        } else if (data && Array.isArray(data.content) && typeof data.totalElements === 'number') {
-                            activeCount = data.totalElements;
-                        }
-                        return { classId: cls.id, studentCount: activeCount };
-                    } catch (e) {
-                        return { classId: cls.id, studentCount: 0 };
-                    }
-                });
-
-                const instructorPromises = visibleClasses.map(async (cls) => {
-                    try {
-                        const res = await http.get(`/api/classes/${cls.id}/lecturers`);
-                        const apiData: any[] = res.data.items || [];
-                        const instructors: Instructor[] = apiData
-                            .filter((item) => item.active)
-                            .map((item) => ({
-                                id: item.assignmentId.toString(),
-                                name: item.lecturer.fullName,
-                                initial: item.lecturer.fullName.charAt(0).toUpperCase(),
-                                avatar: item.lecturer.avatarUrl || undefined,
-                            }));
-                        return { classId: cls.id, instructors };
-                    } catch (e) {
-                        return { classId: cls.id, instructors: [] };
-                    }
-                });
-
-                const [studentCounts, instructorData] = await Promise.all([
-                    Promise.all(studentCountPromises),
-                    Promise.all(instructorPromises),
-                ]);
-
-                // Update classes with student counts and instructors in background
-                setClasses((prev) =>
-                    prev.map((cls) => {
-                        const countData = studentCounts.find((sc) => sc.classId === cls.id);
-                        const instructorInfo = instructorData.find((id) => id.classId === cls.id);
-                        return {
-                            ...cls,
-                            students: countData ? countData.studentCount : cls.students,
-                            instructors: instructorInfo ? instructorInfo.instructors : cls.instructors,
-                        };
-                    }),
-                );
+                // studentCount and instructors are now included directly in the response
             } catch (error) {
                 toast.error('Lỗi tải dữ liệu', 'Không thể tải danh sách lớp học');
             } finally {

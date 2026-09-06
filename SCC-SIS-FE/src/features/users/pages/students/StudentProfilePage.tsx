@@ -86,57 +86,20 @@ export default function StudentProfilePage() {
         try {
             const map = new Map<number, Array<{ className: string; programName: string }>>();
 
-            try {
-                // Thử dùng API gộp dữ liệu học viên kèm enrollments
-                const withEnrollmentsRes = await getAllStudentsWithEnrollments();
-                if (Array.isArray(withEnrollmentsRes.data)) {
-                    withEnrollmentsRes.data.forEach((student) => {
-                        if (student.enrollments && Array.isArray(student.enrollments)) {
-                            map.set(
-                                student.studentId,
-                                student.enrollments.map((e) => ({
-                                    className: e.className,
-                                    programName: e.programName,
-                                })),
-                            );
-                        }
-                    });
-                    setEnrollmentMap(map);
-                    return map;
-                }
-            } catch (batchErr) {
-                // Fallback nếu API gộp không khả dụng: fetch song song (Promise.all) thay vì tuần tự
-                const classesParams = globalSelectedCenterId ? { centerId: globalSelectedCenterId } : undefined;
-                const classesResponse = await listClasses(classesParams);
-                const classes = classesResponse.data || [];
-
-                await Promise.all(
-                    classes.map(async (classItem) => {
-                        try {
-                            const enrollmentsResponse = await getClassStudents(classItem.classId, {
-                                page: 0,
-                                size: 1000,
-                            });
-                            let enrollments: any[] = [];
-                            if (Array.isArray(enrollmentsResponse.data)) {
-                                enrollments = enrollmentsResponse.data;
-                            } else if (enrollmentsResponse.data?.content) {
-                                enrollments = enrollmentsResponse.data.content;
-                            }
-                            enrollments.forEach((enrollment: any) => {
-                                if (!map.has(enrollment.studentId)) {
-                                    map.set(enrollment.studentId, []);
-                                }
-                                map.get(enrollment.studentId)!.push({
-                                    className: classItem.name,
-                                    programName: classItem.programName,
-                                });
-                            });
-                        } catch (e) {
-                            // Skip on error
-                        }
-                    }),
-                );
+            // Dùng API gộp dữ liệu học viên kèm enrollments
+            const withEnrollmentsRes = await getAllStudentsWithEnrollments();
+            if (Array.isArray(withEnrollmentsRes.data)) {
+                withEnrollmentsRes.data.forEach((student) => {
+                    if (student.enrollments && Array.isArray(student.enrollments)) {
+                        map.set(
+                            student.studentId,
+                            student.enrollments.map((e) => ({
+                                className: e.className,
+                                programName: e.programName,
+                            })),
+                        );
+                    }
+                });
             }
 
             setEnrollmentMap(map);

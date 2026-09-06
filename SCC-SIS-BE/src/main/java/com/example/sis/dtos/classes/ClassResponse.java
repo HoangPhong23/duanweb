@@ -42,6 +42,10 @@ public class ClassResponse {
     private Integer createdBy;
     private Integer updatedBy;
 
+    // Added for frontend optimization
+    private Integer studentCount;
+    private List<com.example.sis.dtos.users.UserLiteResponse> instructors;
+
     // Constructors
     public ClassResponse() {
     }
@@ -197,5 +201,21 @@ public class ClassResponse {
 
     public void setStudyTime(StudyTime studyTime) {
         this.studyTime = studyTime;
+    }
+
+    public Integer getStudentCount() {
+        return studentCount;
+    }
+
+    public void setStudentCount(Integer studentCount) {
+        this.studentCount = studentCount;
+    }
+
+    public List<com.example.sis.dtos.users.UserLiteResponse> getInstructors() {
+        return instructors;
+    }
+
+    public void setInstructors(List<com.example.sis.dtos.users.UserLiteResponse> instructors) {
+        this.instructors = instructors;
     }
 }

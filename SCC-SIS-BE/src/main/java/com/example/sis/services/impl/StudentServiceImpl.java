@@ -732,15 +732,21 @@ public class StudentServiceImpl implements StudentService {
     public List<StudentWithEnrollmentsResponse> getAllStudentsWithEnrollments() {
         log.info("📋 Lấy danh sách tất cả học viên với enrollments (chưa bị xóa mềm)");
 
-        return studentRepo.findAllActiveStudents().stream()
-                .map(this::toStudentWithEnrollmentsResponse)
+        List<Student> students = studentRepo.findAllActiveStudents();
+        List<Object[]> allEnrollments = enrollmentRepo.findAllActiveEnrollmentsWithClassInfo();
+        
+        java.util.Map<Integer, List<StudentWithEnrollmentsResponse.EnrollmentDetail>> enrollmentsByStudentId = allEnrollments.stream()
+            .collect(Collectors.groupingBy(
+                e -> (Integer) e[8],
+                Collectors.mapping(this::mapToEnrollmentDetail, Collectors.toList())
+            ));
+
+        return students.stream()
+                .map(student -> toStudentWithEnrollmentsResponseFast(student, enrollmentsByStudentId.getOrDefault(student.getStudentId(), new ArrayList<>())))
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Convert Student entity to StudentWithEnrollmentsResponse
-     */
-    private StudentWithEnrollmentsResponse toStudentWithEnrollmentsResponse(Student student) {
+    private StudentWithEnrollmentsResponse toStudentWithEnrollmentsResponseFast(Student student, List<StudentWithEnrollmentsResponse.EnrollmentDetail> enrollments) {
         StudentWithEnrollmentsResponse response = new StudentWithEnrollmentsResponse();
         
         // Basic student info
@@ -761,12 +767,6 @@ public class StudentServiceImpl implements StudentService {
         response.setCreatedAt(student.getCreatedAt());
         response.setUpdatedAt(student.getUpdatedAt());
 
-        // Load enrollments using native query or repository method
-        List<StudentWithEnrollmentsResponse.EnrollmentDetail> enrollments = 
-            studentRepo.findEnrollmentsByStudentId(student.getStudentId()).stream()
-                .map(this::mapToEnrollmentDetail)
-                .collect(Collectors.toList());
-        
         response.setEnrollments(enrollments);
         return response;
     }
@@ -792,80 +792,43 @@ public class StudentServiceImpl implements StudentService {
     public List<java.util.Map<String, Object>> getAllStudentWarnings(Integer centerId) {
         List<java.util.Map<String, Object>> allWarnings = new ArrayList<>();
         
-        // Get all active students
-        List<Student> students = studentRepo.findAllActiveStudents();
+        List<Object[]> rawData = studentRepo.findStudentWarningsAggregate(centerId);
         
-        for (Student student : students) {
-            // Get all active enrollments for this student
-            List<Enrollment> activeEnrollments = enrollmentRepo
-                .findByStudent_StudentIdAndStatusAndRevokedAtIsNull(
-                    student.getStudentId(), 
-                    EnrollmentStatus.ACTIVE
-                );
-
-            for (Enrollment enrollment : activeEnrollments) {
-                Integer classId = enrollment.getClassEntity().getClassId();
-                Integer classCenterId = enrollment.getClassEntity().getCenter() != null 
-                    ? enrollment.getClassEntity().getCenter().getCenterId() : null;
-                
-                // Filter by centerId if provided
-                if (centerId != null && !centerId.equals(classCenterId)) {
-                    continue;
-                }
-
-                String className = enrollment.getClassEntity().getName();
-                String programName = enrollment.getClassEntity().getProgram() != null 
-                    ? enrollment.getClassEntity().getProgram().getName() : "";
-
-                // Count absences for this class
-                List<com.example.sis.models.AttendanceRecord> attendanceRecords = 
-                    attendanceRecordRepo.findByStudentIdAndClassIdOrderByAttendanceDateDesc(
-                        student.getStudentId(), classId);
-                
-                long absentCount = attendanceRecords.stream()
-                    .filter(ar -> ar.getStatus() == com.example.sis.enums.AttendanceStatus.ABSENT)
-                    .count();
-
-                // Count failed tests for this class
-                List<com.example.sis.models.GradeRecord> gradeRecords = 
-                    gradeRecordRepo.findByStudentIdAndClassId(student.getStudentId(), classId);
-                
-                long failCount = gradeRecords.stream()
-                    .filter(gr -> gr.getPassStatus() == com.example.sis.enums.PassStatus.FAIL)
-                    .count();
-
-                // Add warning if absences > 2 or failures > 2
-                if (absentCount > 2 || failCount > 2) {
-                    java.util.Map<String, Object> warning = new java.util.HashMap<>();
-                    warning.put("studentId", student.getStudentId());
-                    warning.put("code", student.getEmail()); // Use email as code identifier
-                    warning.put("name", student.getFullName());
-                    warning.put("classCode", enrollment.getClassEntity().getName()); // Use name as classCode
-                    warning.put("program", programName);
-                    warning.put("severity", absentCount > 2 && failCount > 2 ? "HIGH" : "MEDIUM");
-                    
-                    // Build detail string
-                    List<String> details = new ArrayList<>();
-                    if (absentCount > 2) {
-                        details.add("Vắng " + absentCount + " buổi");
-                    }
-                    if (failCount > 2) {
-                        details.add("Trượt " + failCount + " bài");
-                    }
-                    warning.put("detail", String.join(", ", details));
-                    
-                    // Build reason string
-                    if (absentCount > 2 && failCount > 2) {
-                        warning.put("reason", "Vắng mặt và học tập kém");
-                    } else if (absentCount > 2) {
-                        warning.put("reason", "Vắng mặt");
-                    } else {
-                        warning.put("reason", "Học tập kém");
-                    }
-                    
-                    allWarnings.add(warning);
-                }
+        for (Object[] row : rawData) {
+            Integer studentId = ((Number) row[0]).intValue();
+            String code = (String) row[1];
+            String name = (String) row[2];
+            String classCode = (String) row[3];
+            String program = (String) row[4];
+            long absentCount = ((Number) row[5]).longValue();
+            long failCount = ((Number) row[6]).longValue();
+            
+            java.util.Map<String, Object> warning = new java.util.HashMap<>();
+            warning.put("studentId", studentId);
+            warning.put("code", code);
+            warning.put("name", name);
+            warning.put("classCode", classCode);
+            warning.put("program", program != null ? program : "");
+            warning.put("severity", absentCount > 2 && failCount > 2 ? "HIGH" : "MEDIUM");
+            
+            List<String> details = new ArrayList<>();
+            if (absentCount > 2) {
+                details.add("Vắng " + absentCount + " buổi");
             }
+            if (failCount > 2) {
+                details.add("Trượt " + failCount + " bài");
+            }
+            warning.put("detail", String.join(", ", details));
+            
+            if (absentCount > 2 && failCount > 2) {
+                warning.put("reason", "Vắng mặt và học tập kém");
+            } else if (absentCount > 2) {
+                warning.put("reason", "Vắng mặt");
+            } else {
+                warning.put("reason", "Học tập kém");
+            }
+            
+            allWarnings.add(warning);
         }
 
         return allWarnings;

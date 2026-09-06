@@ -62,7 +62,8 @@ interface CacheEntry {
 
 const apiCache = new Map<string, CacheEntry>();
 const pendingRequests = new Map<string, Promise<any>>();
-const CACHE_TTL_MS = 5 * 60 * 1000; // Cache 5 phút (300,000ms) để khi quay lại trang luôn hiển thị tức thì (0ms)
+const CACHE_TTL_MS = 5 * 60 * 1000; // Cache 5 phút (300,000ms)
+const MAX_CACHE_SIZE = 100; // Giới hạn số lượng cache entry (LRU)
 
 // Tạo key định danh cho request dựa trên URL và Params
 function getCacheKey(config: any): string {
@@ -95,8 +96,9 @@ api.interceptors.request.use(async (config) => {
     }
 
     const method = (config.method || 'get').toLowerCase();
+    const isSkipCache = config.params?.__skipCache;
 
-    // Nếu là thao tác ghi dữ liệu (POST, PUT, PATCH, DELETE), xóa cache liên quan
+    // Nếu là thao tác ghi dữ liệu, xóa cache liên quan
     if (method !== 'get') {
         const path = (config.url || '').split('?')[0];
         const baseEndpoint = path.split('/').slice(0, 3).join('/'); // Ví dụ: /api/users, /api/classes
@@ -104,20 +106,56 @@ api.interceptors.request.use(async (config) => {
         return config;
     }
 
-    // Với GET request: kiểm tra xem có cache còn hạn không
-    const cacheKey = getCacheKey(config);
-    const cached = apiCache.get(cacheKey);
+    if (isSkipCache) {
+        return config;
+    }
 
-    if (cached && (Date.now() - cached.timestamp < CACHE_TTL_MS)) {
-        // Trả về dữ liệu từ RAM ngay tức thì (0ms) bằng Axios adapter giả lập
-        config.adapter = async () => ({
-            data: cached.data,
-            status: cached.status,
-            statusText: cached.statusText,
-            headers: cached.headers,
-            config,
-            request: {},
-        });
+    const cacheKey = getCacheKey(config);
+
+    // 1. Deduplication: Nếu request đang được gọi, trả về cùng 1 Promise
+    if (pendingRequests.has(cacheKey)) {
+        config.adapter = () => pendingRequests.get(cacheKey)!;
+        return config;
+    }
+
+    // 2. Cache & Stale-While-Revalidate (SWR)
+    const cached = apiCache.get(cacheKey);
+    if (cached) {
+        const age = Date.now() - cached.timestamp;
+        if (age < CACHE_TTL_MS) {
+            // SWR: Gọi API ngầm update data nếu cache cũ hơn 30s
+            if (age > 30000) {
+                setTimeout(() => {
+                    api.get(config.url!, { ...config, params: { ...config.params, __skipCache: true } }).catch(() => {});
+                }, 0);
+            }
+
+            // Trả về dữ liệu từ RAM ngay lập tức
+            config.adapter = async () => ({
+                data: cached.data,
+                status: cached.status,
+                statusText: cached.statusText,
+                headers: cached.headers,
+                config,
+                request: {},
+            });
+            return config;
+        }
+    }
+
+    // 3. Track request để deduplicate các call tiếp theo
+    const originalAdapter = config.adapter || axios.defaults.adapter;
+    if (originalAdapter) {
+        config.adapter = async (cfg) => {
+            // @ts-ignore
+            const promise = originalAdapter(cfg);
+            pendingRequests.set(cacheKey, promise);
+            try {
+                return await promise;
+            } finally {
+                pendingRequests.delete(cacheKey);
+            }
+        };
     }
 
     return config;
@@ -127,11 +165,21 @@ api.interceptors.request.use(async (config) => {
 api.interceptors.response.use(
     (res) => {
         const method = (res.config.method || 'get').toLowerCase();
-        // Chỉ lưu cache cho GET request thành công và không phải file export/download
+        // Chỉ lưu cache cho GET request thành công và không phải file
         if (method === 'get' && res.status >= 200 && res.status < 300) {
             const isBinary = res.config.responseType === 'blob' || res.config.responseType === 'arraybuffer';
-            if (!isBinary) {
+            if (!isBinary && !res.config.params?.__skipCache) {
                 const cacheKey = getCacheKey(res.config);
+                
+                // Evict LRU nếu quá dung lượng
+                if (apiCache.size >= MAX_CACHE_SIZE && !apiCache.has(cacheKey)) {
+                    const firstKey = apiCache.keys().next().value;
+                    if (firstKey) apiCache.delete(firstKey);
+                }
+
+                // Cập nhật lại cache (chuyển lên đầu)
+                if (apiCache.has(cacheKey)) apiCache.delete(cacheKey);
+                
                 apiCache.set(cacheKey, {
                     data: res.data,
                     status: res.status,

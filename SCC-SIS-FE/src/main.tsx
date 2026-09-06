@@ -14,6 +14,9 @@ window.addEventListener('error', (e) => {
 
 async function bootstrap() {
     try {
+        // 4.1: Warmup ping to Render backend (fire and forget)
+        fetch('https://duanweb.onrender.com/actuator/health', { mode: 'no-cors' }).catch(() => {});
+
         // Clear any corrupted OAuth state
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('error')) {
@@ -40,7 +43,8 @@ async function bootstrap() {
         (window as any).token = keycloak.token;
 
         const { useUserProfile } = await import('./stores/userProfile');
-        await useUserProfile.getState().fetchMe();
+        // 2.3: Fire and forget fetchMe, don't await it here. App.tsx will show loading spinner.
+        useUserProfile.getState().fetchMe();
 
         ReactDOM.createRoot(document.getElementById('root')!).render(
             <React.StrictMode>

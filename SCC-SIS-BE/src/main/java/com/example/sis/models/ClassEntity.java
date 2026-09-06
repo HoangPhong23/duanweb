@@ -23,11 +23,11 @@ public class ClassEntity {
         @Column(name = "class_id")
         private Integer classId;
 
-        @ManyToOne
+        @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "center_id", nullable = false, foreignKey = @ForeignKey(name = "fk_classes_center"))
         private Center center;
 
-        @ManyToOne
+        @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "program_id", nullable = false, foreignKey = @ForeignKey(name = "fk_classes_program"))
         private Program program;
 
@@ -70,16 +70,20 @@ public class ClassEntity {
         @Column(name = "updated_at", nullable = false)
         private LocalDateTime updatedAt;
 
-        @ManyToOne
+        @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "created_by", foreignKey = @ForeignKey(name = "fk_classes_created_by"))
         private User createdBy;
 
-        @ManyToOne
+        @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "updated_by", foreignKey = @ForeignKey(name = "fk_classes_updated_by"))
         private User updatedBy;
 
+        @org.hibernate.annotations.BatchSize(size = 50)
         @OneToMany(mappedBy = "classEntity", fetch = FetchType.LAZY)
         private List<ClassTeacher> classTeachers = new ArrayList<>();
+
+        @org.hibernate.annotations.Formula("(SELECT COUNT(e.enrollment_id) FROM enrollments e WHERE e.class_id = class_id AND e.status = 'ACTIVE' AND e.revoked_at IS NULL)")
+        private Integer activeStudentCount;
 
         public enum ClassStatus {
                 PLANNED, ONGOING, FINISHED, CANCELLED
@@ -228,5 +232,13 @@ public class ClassEntity {
 
         public void setClassTeachers(List<ClassTeacher> classTeachers) {
                 this.classTeachers = classTeachers;
+        }
+
+        public Integer getActiveStudentCount() {
+                return activeStudentCount;
+        }
+
+        public void setActiveStudentCount(Integer activeStudentCount) {
+                this.activeStudentCount = activeStudentCount;
         }
 }
