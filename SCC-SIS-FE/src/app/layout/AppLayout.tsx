@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Home,
     Building2,
@@ -23,6 +23,7 @@ import { useUserProfile } from '../../stores/userProfile';
 import { roleDisplay } from '../../utils/roleLabel';
 import TopNavBar from '@/features/users/pages/dashboard/components/TopNavBar';
 import AIAssistant from '@/components/AIAssistant/AIAssistant';
+import api from '@/shared/api/http';
 
 function RootLayout({ children }: { children: React.ReactNode }) {
     return (
@@ -99,6 +100,28 @@ function AppLayout({ children }: AppLayoutProps) {
     // Check if user is STUDENT
     const isStudent = me?.roles?.some((role) => role.code === 'STUDENT') ?? false;
     const isLecturer = me?.roles?.some((role) => role.code === 'LECTURER') ?? false;
+
+    // Prefetch data khi hover sidebar - map path -> API endpoints
+    const prefetchMap: Record<string, string[]> = {
+        '/users': ['/api/user-views', '/api/user-stats/roles', '/api/roles', '/api/centers/lite'],
+        '/centers': ['/api/centers'],
+        '/roles': ['/api/roles'],
+        '/classes': ['/api/classes', '/api/centers/lite'],
+        '/students': ['/api/students/with-enrollments'],
+        '/': ['/api/dashboard/summary', '/api/students/warnings'],
+    };
+
+    const prefetchedPaths = React.useRef(new Set<string>());
+    const handleNavHover = useCallback((path: string) => {
+        if (prefetchedPaths.current.has(path)) return;
+        prefetchedPaths.current.add(path);
+        const endpoints = prefetchMap[path];
+        if (endpoints) {
+            for (const url of endpoints) {
+                api.get(url).catch(() => {});
+            }
+        }
+    }, []);
 
     // Menu configuration - easily extensible
     const menuGroups: MenuGroup[] = [
@@ -256,6 +279,7 @@ function AppLayout({ children }: AppLayoutProps) {
                                             key={item.id}
                                             to={item.path}
                                             end={item.end}
+                                            onMouseEnter={() => handleNavHover(item.path)}
                                             className={({ isActive }) =>
                                                 `flex items-center ${sidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3'} py-2.5 rounded-lg text-sm transition-all duration-200 ${
                                                     isActive
