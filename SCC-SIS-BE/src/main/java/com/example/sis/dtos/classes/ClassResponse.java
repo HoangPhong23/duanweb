@@ -44,10 +44,23 @@ public class ClassResponse {
 
     // Added for frontend optimization
     private Integer studentCount;
-    private List<com.example.sis.dtos.users.UserLiteResponse> instructors;
+    private List<InstructorResponse> instructors;
 
     // Constructors
     public ClassResponse() {
+    }
+
+    public static class InstructorResponse {
+        private Integer userId;
+        private String fullName;
+        private String avatarUrl;
+
+        public Integer getUserId() { return userId; }
+        public void setUserId(Integer userId) { this.userId = userId; }
+        public String getFullName() { return fullName; }
+        public void setFullName(String fullName) { this.fullName = fullName; }
+        public String getAvatarUrl() { return avatarUrl; }
+        public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
     }
 
     // Getters and Setters
@@ -211,11 +224,11 @@ public class ClassResponse {
         this.studentCount = studentCount;
     }
 
-    public List<com.example.sis.dtos.users.UserLiteResponse> getInstructors() {
+    public List<InstructorResponse> getInstructors() {
         return instructors;
     }
 
-    public void setInstructors(List<com.example.sis.dtos.users.UserLiteResponse> instructors) {
+    public void setInstructors(List<InstructorResponse> instructors) {
         this.instructors = instructors;
     }
 }

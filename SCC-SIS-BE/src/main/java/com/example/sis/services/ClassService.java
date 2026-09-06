@@ -413,7 +413,7 @@ public class ClassService {
             response.setInstructors(classEntity.getClassTeachers().stream()
                 .filter(ct -> ct.getEndDate() == null || !ct.getEndDate().isBefore(today))
                 .map(ct -> {
-                    com.example.sis.dtos.users.UserLiteResponse u = new com.example.sis.dtos.users.UserLiteResponse();
+                    ClassResponse.InstructorResponse u = new ClassResponse.InstructorResponse();
                     if (ct.getTeacher() != null) {
                         u.setUserId(ct.getTeacher().getUserId());
                         u.setFullName(ct.getTeacher().getFullName());
