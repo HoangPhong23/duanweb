@@ -1297,7 +1297,7 @@ export default function ClassesPage() {
                             {/* Progress */}
                             <div className="mt-6">
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className="text-sm text-gray-500">Tiến độ lớp học</span>
+                                    <span className="text-sm text-gray-500">Sĩ số lớp học</span>
                                     <span className="text-sm font-medium">
                                         {Math.round((selectedClass.students / selectedClass.maxStudents) * 100)}%
                                     </span>

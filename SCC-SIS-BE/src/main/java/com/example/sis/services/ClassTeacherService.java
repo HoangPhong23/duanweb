@@ -312,12 +312,14 @@ public class ClassTeacherService {
 
         // Set các field để revoke assignment
         var today = LocalDate.now(ZoneId.systemDefault());
+         // Lấy ngày hiện tại trên máy chủ ngay lúc người dùng bấm nút Hủy gán
         ct.setEndDate(today);
         ct.setEffEndDate(today);
         ct.setRevokedBy(null); // TODO: Set current user when available
+        // Gán ngày kết thúc (endDate) bằng ngày hôm nay -> Không còn là NULL nữa!
         ct.setUpdatedAt(LocalDateTime.now());
 
-        classTeacherRepository.save(ct);
+        classTeacherRepository.save(ct);// Lưu cập nhật vào Database (KHÔNG hề dùng lệnh delete)
     }
 
     /**
@@ -334,7 +336,7 @@ public class ClassTeacherService {
                 null // avatarUrl - cần thêm field này vào User model nếu cần
         );
 
-        // Xác định trạng thái active dựa trên endDate IS NULL
+        // Xác định trạng thái active dựa trên endDate IS NULL!!!!!!
         boolean isActive = classTeacher.getEndDate() == null;
 
         return new ClassLecturerItem(

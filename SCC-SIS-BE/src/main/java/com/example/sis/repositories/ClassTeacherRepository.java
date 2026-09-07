@@ -20,7 +20,7 @@ public interface ClassTeacherRepository extends JpaRepository<ClassTeacher, Inte
     @Query("SELECT ct FROM ClassTeacher ct " +
             "JOIN FETCH ct.teacher t " +
             "WHERE ct.classEntity.id = :classId " +
-            "AND (ct.endDate IS NULL OR ct.endDate >= CURRENT_DATE) " +
+            "AND (ct.endDate IS NULL OR ct.endDate >= CURRENT_DATE) " + //
             "ORDER BY ct.startDate ASC")
     List<ClassTeacher> findActiveByClassId(@Param("classId") Integer classId);
 
