@@ -82,13 +82,6 @@ export default function RolesPage() {
                     <h1 className="text-lg font-semibold">Quản lý Vai trò</h1>
                     <p className="text-xs text-gray-500">Quản lý vai trò và phân quyền trong hệ thống</p>
                 </div>
-                <button
-                    className="inline-flex items-center gap-2 rounded-md bg-[#030213] text-white text-sm px-4 py-2 hover:bg-black focus:ring-2 focus:ring-gray-300"
-                    onClick={() => setOpenCreate(true)}
-                >
-                    <Plus className="w-4 h-4" />
-                    Thêm Vai trò mới
-                </button>
             </div>
 
             <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

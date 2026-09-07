@@ -107,7 +107,7 @@ const calculateStatusFromDates = (startDate?: string, endDate?: string): ClassSt
     today.setHours(0, 0, 0, 0);
     const start = new Date(startDate);
     const end = new Date(endDate);
-
+//Trạng thái chuẩn bị đang học và hoàn thành
     if (today < start) {
         return 'PLANNED';
     } else if (today > end) {

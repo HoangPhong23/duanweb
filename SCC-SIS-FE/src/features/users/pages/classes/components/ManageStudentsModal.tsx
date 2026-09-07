@@ -376,35 +376,6 @@ const ManageStudentsModal: React.FC<ManageStudentsModalProps> = ({
                         <option value="DROPPED">Đã nghỉ</option>
                         <option value="GRADUATED">Tốt nghiệp</option>
                     </select>
-                    <select
-                        value={selectedMonth}
-                        onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                        className="text-sm border rounded px-2 py-1 outline-none focus:ring-2 focus:ring-blue-200"
-                    >
-                        <option value={1}>Tháng 1</option>
-                        <option value={2}>Tháng 2</option>
-                        <option value={3}>Tháng 3</option>
-                        <option value={4}>Tháng 4</option>
-                        <option value={5}>Tháng 5</option>
-                        <option value={6}>Tháng 6</option>
-                        <option value={7}>Tháng 7</option>
-                        <option value={8}>Tháng 8</option>
-                        <option value={9}>Tháng 9</option>
-                        <option value={10}>Tháng 10</option>
-                        <option value={11}>Tháng 11</option>
-                        <option value={12}>Tháng 12</option>
-                    </select>
-                    <select
-                        value={selectedYear}
-                        onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                        className="text-sm border rounded px-2 py-1 outline-none focus:ring-2 focus:ring-blue-200"
-                    >
-                        {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((year) => (
-                            <option key={year} value={year}>
-                                {year}
-                            </option>
-                        ))}
-                    </select>
                 </div>
                 {!readOnly && (
                     <button
