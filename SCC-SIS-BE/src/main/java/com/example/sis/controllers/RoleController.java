@@ -27,6 +27,7 @@ public class RoleController {
      */
     @GetMapping
     @PreAuthorize("isAuthenticated()")
+    @org.springframework.cache.annotation.Cacheable(value = "authzCache", key = "'roles-list-' + (#preview != null ? #preview : 4)")
     public ResponseEntity<RoleListResponse> listRoles(
             @RequestParam(value = "preview", required = false) Integer preview) {
         return ResponseEntity.ok(roleService.listRolesNew(preview));
@@ -49,6 +50,7 @@ public class RoleController {
      */
     @PostMapping
     @PreAuthorize("@authz.isSuperAdmin(authentication)")
+    @org.springframework.cache.annotation.CacheEvict(value = "authzCache", allEntries = true)
     public ResponseEntity<RoleResponse> createRole(@Valid @RequestBody CreateRoleRequest request) {
         RoleResponse created = roleService.createRole(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
@@ -60,6 +62,7 @@ public class RoleController {
      */
     @PutMapping("/{id}")
     @PreAuthorize("@authz.isSuperAdmin(authentication)")
+    @org.springframework.cache.annotation.CacheEvict(value = "authzCache", allEntries = true)
     public ResponseEntity<RoleResponse> updateRole(@PathVariable Integer id,
                                                    @Valid @RequestBody UpdateRoleRequest request) {
         return ResponseEntity.ok(roleService.updateRole(id, request));
@@ -72,6 +75,7 @@ public class RoleController {
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("@authz.isSuperAdmin(authentication)")
+    @org.springframework.cache.annotation.CacheEvict(value = "authzCache", allEntries = true)
     public ResponseEntity<Void> deleteRole(@PathVariable Integer id) {
         roleService.deleteRole(id);
         return ResponseEntity.noContent().build();

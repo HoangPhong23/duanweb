@@ -8,6 +8,8 @@ import BackendErrorHandler from './shared/components/BackendErrorHandler';
 import { useUserProfile } from './stores/userProfile';
 import { useLocation } from 'react-router-dom';
 import { appRoutes } from './app/routes/routeConfig';
+import { prefetchCommonData } from './shared/api/prefetch';
+import { useEffect } from 'react';
 
 function AppContent() {
     const { me, loading, error } = useUserProfile();
@@ -16,6 +18,13 @@ function AppContent() {
     // Debug: Log user profile
     // Kiểm tra nếu user là học sinh
     const isStudent = me?.roles?.some((role) => role.code === 'STUDENT') ?? false;
+
+    useEffect(() => {
+        if (me && !loading) {
+            const userRoles = me.roles?.map((r: any) => r.code) || [];
+            prefetchCommonData(userRoles);
+        }
+    }, [me, loading]);
     // Check if current route should render without layout
     const currentRoute = appRoutes.find((r) => {
         if (r.path.includes(':')) {

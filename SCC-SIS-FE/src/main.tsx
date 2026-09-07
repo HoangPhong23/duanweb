@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { keycloak } from './keycloak';
 import './index.css';
-import { prefetchCommonData } from './shared/api/prefetch';
 
 // Ignore browser extension errors
 window.addEventListener('error', (e) => {
@@ -46,10 +45,6 @@ async function bootstrap() {
         const { useUserProfile } = await import('./stores/userProfile');
         // 2.3: Fire and forget fetchMe, don't await it here. App.tsx will show loading spinner.
         useUserProfile.getState().fetchMe();
-
-        // Prefetch tất cả dữ liệu các trang hay dùng ngay sau login
-        // Kết quả sẽ tự động cache trong RAM, khi user click vào trang nào → hiển thị tức thì
-        prefetchCommonData();
 
         ReactDOM.createRoot(document.getElementById('root')!).render(
             <React.StrictMode>

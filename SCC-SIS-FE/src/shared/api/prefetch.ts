@@ -10,30 +10,47 @@ let prefetched = false;
  * Kết quả sẽ tự động được lưu vào cache trong http.ts interceptor.
  * Chỉ chạy 1 lần duy nhất sau khi đăng nhập.
  */
-export function prefetchCommonData() {
+export function prefetchCommonData(userRoles: string[] = []) {
     if (prefetched) return;
     prefetched = true;
 
-    // Chia làm 2 đợt (Waves) để tránh dội bom Render (Render free tier dễ bị nghẽn nếu gọi 12 API cùng lúc)
+    const isAdmin = userRoles.includes('SUPER_ADMIN');
+    const isManager = userRoles.includes('CENTER_MANAGER');
+    const isStaff = userRoles.includes('ACADEMIC_STAFF');
+    const isLecturer = userRoles.includes('LECTURER') || userRoles.includes('TEACHER');
+    
+    const isStaffOrAdmin = isAdmin || isManager || isStaff;
+
     // Wave 1: Các API cần cho Dashboard & Global UI (TopNav, Menu)
-    const wave1 = [
-        { url: '/api/dashboard/summary' },               // Dashboard
-        { url: '/api/students/warnings' },               // Dashboard warnings
-        { url: '/api/centers/lite' },                    // Global Dropdown
-    ];
+    const wave1 = [];
+    if (isStaffOrAdmin || isLecturer) {
+        wave1.push({ url: '/api/dashboard/summary' });
+        wave1.push({ url: '/api/students/warnings' });
+    }
+    if (isStaffOrAdmin) {
+        wave1.push({ url: '/api/centers/lite' });
+    }
 
     // Wave 2: Các API của các trang con (Users, Classes, Students, Roles) - Delay 1 giây
-    const wave2 = [
-        { url: '/api/roles', params: { active: true } }, 
-        { url: '/api/user-views' },                      
-        { url: '/api/user-stats/roles' },                
-        { url: '/api/classes' },                         
-        { url: '/api/centers/all' },                     
-        { url: '/api/students' },                        
-        { url: '/api/permissions/groups' },              
-        { url: '/api/programs' },                        
-        { url: '/api/programs/lite' },                   
-    ];
+    const wave2 = [];
+    
+    if (isAdmin) {
+        wave2.push({ url: '/api/roles', params: { active: true } });
+        wave2.push({ url: '/api/permissions/groups' });
+        wave2.push({ url: '/api/centers/all' });
+    }
+    
+    if (isAdmin || isManager) {
+        wave2.push({ url: '/api/user-views' });
+        wave2.push({ url: '/api/user-stats/roles' });
+    }
+    
+    if (isStaffOrAdmin) {
+        wave2.push({ url: '/api/classes' });
+        wave2.push({ url: '/api/students' });
+        wave2.push({ url: '/api/programs' });
+        wave2.push({ url: '/api/programs/lite' });
+    }
 
     // Chạy Wave 1 ngay lập tức
     for (const ep of wave1) {
@@ -41,9 +58,11 @@ export function prefetchCommonData() {
     }
 
     // Chạy Wave 2 sau 1000ms để nhường băng thông cho UI Dashboard render trước
-    setTimeout(() => {
-        for (const ep of wave2) {
-            api.get(ep.url, { params: ep.params }).catch(() => {});
-        }
-    }, 1000);
+    if (wave2.length > 0) {
+        setTimeout(() => {
+            for (const ep of wave2) {
+                api.get(ep.url, { params: ep.params }).catch(() => {});
+            }
+        }, 1000);
+    }
 }

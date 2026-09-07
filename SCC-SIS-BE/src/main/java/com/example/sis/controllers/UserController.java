@@ -69,6 +69,7 @@ public class UserController {
     // active
     @GetMapping("/profile")
     @PreAuthorize("isAuthenticated()")
+    @org.springframework.cache.annotation.Cacheable(value = "authzCache", key = "'profile-' + #authentication.name", unless = "#result.statusCodeValue != 200")
     public ResponseEntity<UserProfileResponse> getProfile(Authentication authentication) {
         // 1. Lấy userId từ token (cố gắng tìm user hiện có)
         Long userIdLong = userLookupService.resolveUserIdFromToken(authentication);
