@@ -102,13 +102,13 @@ function AppLayout({ children }: AppLayoutProps) {
     const isLecturer = me?.roles?.some((role) => role.code === 'LECTURER') ?? false;
 
     // Prefetch data khi hover sidebar - map path -> API endpoints
-    const prefetchMap: Record<string, string[]> = {
-        '/users': ['/api/user-views', '/api/user-stats/roles', '/api/roles', '/api/centers/lite'],
-        '/centers': ['/api/centers'],
-        '/roles': ['/api/roles'],
-        '/classes': ['/api/classes', '/api/centers/lite'],
-        '/students': ['/api/students/with-enrollments'],
-        '/': ['/api/dashboard/summary', '/api/students/warnings'],
+    const prefetchMap: Record<string, { url: string; params?: any }[]> = {
+        '/users': [{ url: '/api/user-views' }, { url: '/api/user-stats/roles' }, { url: '/api/roles', params: { active: true } }, { url: '/api/centers/lite' }],
+        '/centers': [{ url: '/api/centers' }],
+        '/roles': [{ url: '/api/roles', params: { active: true } }, { url: '/api/permissions/groups' }],
+        '/classes': [{ url: '/api/classes' }, { url: '/api/centers/lite' }, { url: '/api/programs/lite' }],
+        '/students': [{ url: '/api/students' }, { url: '/api/programs' }],
+        '/': [{ url: '/api/dashboard/summary' }, { url: '/api/students/warnings' }],
     };
 
     const prefetchedPaths = React.useRef(new Set<string>());
@@ -117,8 +117,8 @@ function AppLayout({ children }: AppLayoutProps) {
         prefetchedPaths.current.add(path);
         const endpoints = prefetchMap[path];
         if (endpoints) {
-            for (const url of endpoints) {
-                api.get(url).catch(() => {});
+            for (const ep of endpoints) {
+                api.get(ep.url, { params: ep.params }).catch(() => {});
             }
         }
     }, []);

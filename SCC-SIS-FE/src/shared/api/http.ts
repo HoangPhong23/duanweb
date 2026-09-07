@@ -65,10 +65,25 @@ const pendingRequests = new Map<string, Promise<any>>();
 const CACHE_TTL_MS = 5 * 60 * 1000; // Cache 5 phút (300,000ms)
 const MAX_CACHE_SIZE = 100; // Giới hạn số lượng cache entry (LRU)
 
-// Tạo key định danh cho request dựa trên URL và Params
+// Tạo key định danh cho request dựa trên URL và Params chuẩn hóa
 function getCacheKey(config: any): string {
-    const paramsStr = config.params ? JSON.stringify(config.params) : '';
-    return `${config.url || ''}?${paramsStr}`;
+    const params = config.params || {};
+    // Lọc bỏ các param undefined, null, và sắp xếp keys để hash giống nhau
+    const keys = Object.keys(params)
+        .filter((k) => params[k] !== undefined && params[k] !== null)
+        .sort();
+    
+    const cleanParams: Record<string, any> = {};
+    keys.forEach((k) => {
+        cleanParams[k] = params[k];
+    });
+    
+    const paramsStr = keys.length > 0 ? JSON.stringify(cleanParams) : '';
+    // Đảm bảo URL bỏ qua dấu / cuối
+    let url = config.url || '';
+    if (url.endsWith('/')) url = url.slice(0, -1);
+    
+    return `${url}?${paramsStr}`;
 }
 
 // Xóa cache khi có thao tác làm thay đổi dữ liệu (POST, PUT, PATCH, DELETE)

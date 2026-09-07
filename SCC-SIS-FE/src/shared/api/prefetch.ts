@@ -14,22 +14,23 @@ export function prefetchCommonData() {
     if (prefetched) return;
     prefetched = true;
 
-    // Fire-and-forget: không await, không block UI
+    // Sử dụng config object để truyền params chuẩn xác như các trang gọi
     const endpoints = [
-        '/api/roles',                    // UsersPage, AssignRoleModal
-        '/api/centers/lite',             // UsersPage, ClassesPage dropdown
-        '/api/user-views',               // UsersPage (default no filter)
-        '/api/user-stats/roles',         // UsersPage role stats
-        '/api/classes',                  // ClassesPage
-        '/api/centers',                  // CentersPage
-        '/api/students/warnings',        // Dashboard warnings
-        '/api/students/with-enrollments', // StudentsPage
-        '/api/dashboard/summary',        // Dashboard
+        { url: '/api/roles', params: { active: true } }, // UsersPage, RolesPage, AssignRoleModal
+        { url: '/api/centers/lite' },                    // UsersPage, ClassesPage dropdown
+        { url: '/api/user-views' },                      // UsersPage (default no filter)
+        { url: '/api/user-stats/roles' },                // UsersPage role stats
+        { url: '/api/classes' },                         // ClassesPage
+        { url: '/api/centers' },                         // CentersPage
+        { url: '/api/students/warnings' },               // Dashboard warnings
+        { url: '/api/students' },                        // StudentsPage
+        { url: '/api/dashboard/summary' },               // Dashboard
+        { url: '/api/permissions/groups' },              // RolesPage
+        { url: '/api/programs' },                        // StudentProfilePage
+        { url: '/api/programs/lite' },                   // ClassesPage
     ];
 
-    for (const url of endpoints) {
-        api.get(url).catch(() => {
-            // Bỏ qua lỗi 403/404 - user có thể không có quyền truy cập một số API
-        });
+    for (const ep of endpoints) {
+        api.get(ep.url, { params: ep.params }).catch(() => {});
     }
 }
