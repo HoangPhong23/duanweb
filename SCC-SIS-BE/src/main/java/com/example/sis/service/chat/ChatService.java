@@ -275,9 +275,9 @@ public class ChatService {
      * Get conversation history for context
      */
     public List<ChatMessage> getConversationHistory(ChatSession session, int limit) {
-        return messageRepository.findBySessionOrderByCreatedAtDesc(session)
+        return messageRepository.findBySessionOrderByCreatedAtDesc(session, org.springframework.data.domain.PageRequest.of(0, limit))
+            .getContent()
             .stream()
-            .limit(limit)
             .sorted(Comparator.comparing(ChatMessage::getCreatedAt))
             .collect(Collectors.toList());
     }

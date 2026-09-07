@@ -320,7 +320,7 @@ public class ChatController {
      */
     @PostMapping(value = "/sessions/{sessionId}/messages/stream", produces = "text/event-stream")
     @PreAuthorize("@authz.hasAnyRole(authentication, 'STUDENT', 'TEACHER', 'ADMIN')")
-    public Flux<String> sendMessageStream(
+    public org.springframework.http.ResponseEntity<Flux<String>> sendMessageStream(
         @AuthenticationPrincipal Jwt jwt,
         @PathVariable Integer sessionId,
         @RequestBody ChatMessageRequest request
@@ -340,11 +340,11 @@ public class ChatController {
             if (!session.getUserId().equals(userId) && !securityContext.isAdmin()) {
                 log.warn("🚫 User {} tried to stream to session {} owned by user {}", 
                     userId, sessionId, session.getUserId());
-                return Flux.just("data: {\"type\":\"ERROR\",\"error\":\"Access denied\"}\n\n");
+                return org.springframework.http.ResponseEntity.ok().body(Flux.just("data: {\"type\":\"ERROR\",\"error\":\"Access denied\"}\n\n"));
             }
         } catch (Exception e) {
             log.error("Failed to get session", e);
-            return Flux.just("data: {\"type\":\"ERROR\",\"error\":\"Session not found\"}\n\n");
+            return org.springframework.http.ResponseEntity.ok().body(Flux.just("data: {\"type\":\"ERROR\",\"error\":\"Session not found\"}\n\n"));
         }
         
         // Step 2: Save user message (auto-sanitized)
@@ -359,7 +359,7 @@ public class ChatController {
         if (request.getLessonId() != null) context.put("lessonId", request.getLessonId());
         
         // Step 4: Search relevant context (RAG)
-        return chatService.searchRelevantContext(request.getMessage(), context)
+        Flux<String> streamFlux = chatService.searchRelevantContext(request.getMessage(), context)
             .flatMapMany(sources -> {
                 log.info("📚 Found {} relevant sources", sources.size());
                 
@@ -399,6 +399,13 @@ public class ChatController {
                 return Flux.just("data: {\"type\":\"ERROR\",\"error\":\"" + 
                                escapeJson(error.getMessage()) + "\"}\n\n");
             });
+
+        return org.springframework.http.ResponseEntity.ok()
+            .header("Cache-Control", "no-cache, no-store, must-revalidate")
+            .header("Pragma", "no-cache")
+            .header("Expires", "0")
+            .header("X-Accel-Buffering", "no")
+            .body(streamFlux);
     }
     
     // ===== Helper Methods =====

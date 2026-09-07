@@ -11,10 +11,15 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 @Repository
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Integer> {
     
     List<ChatMessage> findBySessionOrderByCreatedAtDesc(ChatSession session);
+    
+    Page<ChatMessage> findBySessionOrderByCreatedAtDesc(ChatSession session, Pageable pageable);
     
     List<ChatMessage> findBySessionOrderByCreatedAtAsc(ChatSession session);
     
