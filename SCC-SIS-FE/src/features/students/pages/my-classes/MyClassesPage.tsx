@@ -27,6 +27,7 @@ import { getModulesByProgram, type ModuleResponse } from '@/shared/api/modules';
 import { getOrCreateClassGroupRoom } from '@/shared/api/chat';
 import { useToast } from '@/shared/hooks/useToast';
 import { useProgressStore } from '../../hooks/useProgressStore';
+import { CardSkeleton } from '@/shared/components/ui/SkeletonLoaders';
 
 // Types
 type ClassStatus = 'Đang học' | 'Hoàn thành' | 'Sắp học';
@@ -279,11 +280,12 @@ export default function MyClassesPage() {
     // Show loading
     if (profileLoading || loading) {
         return (
-            <div className="flex items-center justify-center min-h-[400px]">
-                <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-                    <p className="text-sm text-gray-600">Đang tải...</p>
+            <div className="p-6 md:p-8 w-full max-w-7xl mx-auto space-y-8">
+                <div className="flex justify-between items-center mb-8">
+                    <div className="h-10 w-48 bg-slate-200 animate-pulse rounded-md" />
+                    <div className="h-10 w-64 bg-slate-200 animate-pulse rounded-md" />
                 </div>
+                <CardSkeleton count={3} />
             </div>
         );
     }

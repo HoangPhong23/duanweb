@@ -35,6 +35,7 @@ import { useCenterSelection, useEnsureCenterLoaded } from '@/stores/centerSelect
 import CenterSwitcher from '@/features/users/pages/dashboard/components/CenterSwitcher';
 import http from '@/shared/api/http';
 import { getModulesByProgram, type ModuleResponse } from '@/shared/api/modules';
+import { TableSkeleton } from '@/shared/components/ui/SkeletonLoaders';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -1621,8 +1622,8 @@ export default function ClassesPage() {
 
             {/* Loading State */}
             {isLoading ? (
-                <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center">
-                    <div className="text-sm text-gray-500">Đang tải dữ liệu...</div>
+                <div className="rounded-2xl border border-gray-200 bg-white p-6">
+                    <TableSkeleton rows={5} columns={6} />
                 </div>
             ) : viewMode === 'list' ? (
                 /* Table List View */

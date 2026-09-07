@@ -4,6 +4,7 @@ import { useToast } from '../../../shared/hooks/useToast'
 import { usePermission } from '../../../shared/components/PermissionProvider'
 import { Building2, Eye, MoreHorizontal, Users2, MapPin, Phone, Mail, Globe, Pencil, Power } from 'lucide-react'
 import ConfirmDialog from '../../../shared/components/ConfirmDialog'
+import { TableSkeleton } from '@/shared/components/ui/SkeletonLoaders'
 
 // Lấy type từ shared/types (không lấy từ API)
 import type { CenterDto, CreateCenterDto, UpdateCenterDto } from '../../../shared/types/centers'
@@ -616,8 +617,8 @@ export default function CentersPage() {
 
             <div className="rounded-lg border bg-white">
                 {loading && (
-                    <div className="flex items-center justify-center py-12">
-                        <div className="text-sm text-gray-500">Đang tải dữ liệu...</div>
+                    <div className="p-6">
+                        <TableSkeleton rows={5} columns={6} />
                     </div>
                 )}
                 {!loading && (

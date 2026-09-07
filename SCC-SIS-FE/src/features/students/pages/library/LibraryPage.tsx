@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { CardSkeleton } from '@/shared/components/ui/SkeletonLoaders';
 import {
     Library,
     FileText,
@@ -188,9 +189,8 @@ export default function LibraryPage() {
 
             {/* Resources Grid */}
             {loading ? (
-                <div className="text-center py-12">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#00796B]"></div>
-                    <p className="mt-4 text-gray-600">Đang tải...</p>
+                <div className="py-4">
+                    <CardSkeleton count={6} />
                 </div>
             ) : filteredResources.length === 0 ? (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">

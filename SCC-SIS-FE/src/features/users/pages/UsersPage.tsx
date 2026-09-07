@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useToast } from '../../../shared/hooks/useToast';
 import { usePermission } from '../../../shared/components/PermissionProvider';
 import { MoreHorizontal, Plus, Search, ChevronDown, Eye, Pencil, Users } from 'lucide-react';
+import { TableSkeleton } from '@/shared/components/ui/SkeletonLoaders';
 import CreateUserModal from '../components/CreateUserModal';
 import AssignRoleModal from '../components/AssignRoleModal';
 
@@ -344,19 +345,24 @@ export default function UsersPage() {
                     </div>
 
                     <div className="text-sm">
-                        {pageUsers.map((u) => {
-                            // danh sách badge ưu tiên assignment theo center filter (nếu có)
-                            const cid = selectedCenterId === '' ? null : Number(selectedCenterId);
-                            const centerAssignments = cid
-                                ? u.assignments.filter((a) => a.scope === 'CENTER' && a.centerId === cid)
-                                : u.assignments;
+                        {loading ? (
+                            <div className="p-6">
+                                <TableSkeleton rows={5} columns={5} />
+                            </div>
+                        ) : (
+                            pageUsers.map((u) => {
+                                // danh sách badge ưu tiên assignment theo center filter (nếu có)
+                                const cid = selectedCenterId === '' ? null : Number(selectedCenterId);
+                                const centerAssignments = cid
+                                    ? u.assignments.filter((a) => a.scope === 'CENTER' && a.centerId === cid)
+                                    : u.assignments;
 
-                            const badges = (centerAssignments.length > 0 ? centerAssignments : u.assignments).slice(
-                                0,
-                                2,
-                            );
+                                const badges = (centerAssignments.length > 0 ? centerAssignments : u.assignments).slice(
+                                    0,
+                                    2,
+                                );
 
-                            return (
+                                return (
                                 <div
                                     key={u.userId}
                                     className="grid grid-cols-12 gap-4 items-center px-6 py-4 border-b border-gray-200"
@@ -460,7 +466,7 @@ export default function UsersPage() {
                                     </div>
                                 </div>
                             );
-                        })}
+                        }))}
                     </div>
                 </div>
 

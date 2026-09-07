@@ -6,6 +6,7 @@ import { useToast } from '@/shared/hooks/useToast';
 import { useUserProfile } from '@/stores/userProfile';
 import { getMyClasses, type ClassDto } from '@/shared/api/classes';
 import http from '@/shared/api/http';
+import { TableSkeleton } from '@/shared/components/ui/SkeletonLoaders';
 
 export default function MyAttendancePage() {
     const [classes, setClasses] = useState<ClassDto[]>([]);
@@ -298,9 +299,8 @@ export default function MyAttendancePage() {
 
                     {/* Table Records */}
                     {loading ? (
-                        <div className="text-center py-12 text-xs text-gray-500">
-                            <Loader2 className="animate-spin h-6 w-6 text-blue-600 mx-auto mb-2" />
-                            Đang tải lịch sử điểm danh...
+                        <div className="p-6 border border-gray-200 rounded-lg overflow-hidden">
+                            <TableSkeleton rows={4} columns={5} />
                         </div>
                     ) : filteredRecords.length > 0 ? (
                         <div className="border border-gray-200 rounded-lg overflow-hidden">

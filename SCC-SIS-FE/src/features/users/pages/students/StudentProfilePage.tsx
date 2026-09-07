@@ -21,6 +21,7 @@ import { listClasses, getClassStudents } from '@/shared/api/classes';
 import { getPrograms } from '@/shared/api/programs';
 import { useCenterSelection, useEnsureCenterLoaded } from '@/stores/centerSelection';
 import type { StudentDto, UpdateStudentDto } from '@/shared/types/student';
+import { TableSkeleton } from '@/shared/components/ui/SkeletonLoaders';
 import type { StudentUI } from '@/shared/types/student-ui';
 import { useToast } from '@/shared/hooks/useToast';
 
@@ -463,8 +464,8 @@ export default function StudentProfilePage() {
 
             {/* Students List */}
             {isLoading ? (
-                <div className="bg-white rounded-lg border p-8 text-center">
-                    <div className="text-gray-500">Đang tải danh sách học viên...</div>
+                <div className="bg-white rounded-lg border p-6">
+                    <TableSkeleton rows={5} columns={6} />
                 </div>
             ) : (
                 <StudentList

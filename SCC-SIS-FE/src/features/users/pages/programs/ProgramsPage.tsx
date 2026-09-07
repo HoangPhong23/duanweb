@@ -11,6 +11,7 @@ import ProgramModulesManager from './components/ProgramModulesManager';
 
 // Import hooks
 import { useToast } from '../../../../shared/hooks/useToast';
+import { TableSkeleton } from '@/shared/components/ui/SkeletonLoaders';
 
 // Import API and types
 import {
@@ -68,19 +69,24 @@ export default function ProgramsPage() {
 
     const [programs, setPrograms] = useState<Program[]>([]);
     const [modules, setModules] = useState<Module[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     // Fetch programs from API
     const fetchPrograms = async () => {
         try {
+            setIsLoading(true);
             const response = await getPrograms();
             setPrograms(response.data);
         } catch (error) {
+        } finally {
+            setIsLoading(false);
         }
     };
 
     // Fetch modules for selected program or all programs
     const fetchModules = async (programId?: number) => {
         try {
+            setIsLoading(true);
             if (programId) {
                 // Fetch modules for specific program
                 const response = await getModulesByProgram({ programId });
@@ -102,6 +108,8 @@ export default function ProgramsPage() {
             }
         } catch (error) {
             setModules([]);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -390,7 +398,11 @@ export default function ProgramsPage() {
             </div>
 
             {/* Tab content */}
-            {activeTab === 'programs' && (
+            {isLoading ? (
+                <div className="p-6 bg-white rounded-lg shadow-sm border border-slate-100">
+                    <TableSkeleton rows={5} columns={5} />
+                </div>
+            ) : activeTab === 'programs' ? (
                 <ProgramsList
                     programs={programs}
                     onView={handleView}
@@ -402,9 +414,7 @@ export default function ProgramsPage() {
                     itemsPerPage={itemsPerPage}
                     onPageChange={setCurrentPage}
                 />
-            )}
-
-            {activeTab === 'modules' && (
+            ) : (
                 <ModulesList
                     modules={modules}
                     programs={programs}

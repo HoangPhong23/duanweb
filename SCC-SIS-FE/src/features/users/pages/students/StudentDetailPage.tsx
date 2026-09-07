@@ -22,6 +22,7 @@ import { useToast } from '@/shared/hooks/useToast';
 import { useUserProfile } from '@/stores/userProfile';
 import type { StudentUI } from '@/shared/types/student-ui';
 import type { StudentEnrollment, StudentWithEnrollmentsDto } from '@/shared/types/student';
+import { ProfileSkeleton, TableSkeleton } from '@/shared/components/ui/SkeletonLoaders';
 import ClassLogTab from '@/features/users/pages/classes/components/journals/ClassLogTab';
 import StudentAttendanceTab from './components/StudentAttendanceTab';
 
@@ -198,7 +199,12 @@ export default function StudentDetailPage() {
     // Get unique class names from grades
     const classOptions = ['ALL', ...Array.from(new Set(grades.map(g => g.className).filter(Boolean)))];
 
-    if (loading) return <div className="bg-white rounded-lg border p-8 text-center">Đang tải dữ liệu...</div>;
+    if (loading) return (
+        <div className="w-full space-y-6 p-6">
+            <ProfileSkeleton />
+            <TableSkeleton rows={3} columns={3} />
+        </div>
+    );
     if (!student) return <div className="bg-white rounded-lg border p-8 text-center">Không tìm thấy học viên</div>;
 
     const tabs = [

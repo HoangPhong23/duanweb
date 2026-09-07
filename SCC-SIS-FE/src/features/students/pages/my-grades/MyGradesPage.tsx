@@ -5,6 +5,7 @@ import { type GradeRecordResponse } from '@/shared/api/grade-entries';
 import { useToast } from '@/shared/hooks/useToast';
 import { useUserProfile } from '@/stores/userProfile';
 import api from '@/shared/api/http';
+import { TableSkeleton } from '@/shared/components/ui/SkeletonLoaders';
 
 export default function MyGradesPage() {
     const [grades, setGrades] = useState<GradeRecordResponse[]>([]);
@@ -165,9 +166,8 @@ export default function MyGradesPage() {
                 </div>
 
                 {loading ? (
-                    <div className="p-8 text-center text-gray-500">
-                        <Loader2 className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2" />
-                        Đang tải điểm...
+                    <div className="p-6">
+                        <TableSkeleton rows={4} columns={5} />
                     </div>
                 ) : grades.length === 0 ? (
                     <div className="p-8 text-center text-gray-500">
