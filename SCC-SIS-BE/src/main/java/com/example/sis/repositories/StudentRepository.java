@@ -84,7 +84,7 @@ public interface StudentRepository extends JpaRepository<Student, Integer> {
              c.name AS classCode,
              p.name AS program,
              COUNT(DISTINCT CASE WHEN ar.status = 'ABSENT' THEN ar.record_id END) AS absentCount,
-             COUNT(DISTINCT CASE WHEN gr.pass_status = 'FAIL' THEN gr.record_id END) AS failCount
+             COUNT(DISTINCT CASE WHEN gr.pass_status = 'FAIL' THEN gr.grade_record_id END) AS failCount
       FROM students s
       JOIN enrollments e ON e.student_id = s.student_id AND e.status = 'ACTIVE' AND e.revoked_at IS NULL
       JOIN classes c ON c.class_id = e.class_id AND c.deleted_at IS NULL
@@ -94,7 +94,7 @@ public interface StudentRepository extends JpaRepository<Student, Integer> {
       WHERE c.center_id = :centerId AND s.deleted_at IS NULL
       GROUP BY s.student_id, s.email, s.full_name, c.name, p.name
       HAVING COUNT(DISTINCT CASE WHEN ar.status = 'ABSENT' THEN ar.record_id END) > 2 
-          OR COUNT(DISTINCT CASE WHEN gr.pass_status = 'FAIL' THEN gr.record_id END) > 2
+          OR COUNT(DISTINCT CASE WHEN gr.pass_status = 'FAIL' THEN gr.grade_record_id END) > 2
       """, nativeQuery = true)
   List<Object[]> findStudentWarningsAggregateByCenter(@Param("centerId") Integer centerId);
 
@@ -105,7 +105,7 @@ public interface StudentRepository extends JpaRepository<Student, Integer> {
              c.name AS classCode,
              p.name AS program,
              COUNT(DISTINCT CASE WHEN ar.status = 'ABSENT' THEN ar.record_id END) AS absentCount,
-             COUNT(DISTINCT CASE WHEN gr.pass_status = 'FAIL' THEN gr.record_id END) AS failCount
+             COUNT(DISTINCT CASE WHEN gr.pass_status = 'FAIL' THEN gr.grade_record_id END) AS failCount
       FROM students s
       JOIN enrollments e ON e.student_id = s.student_id AND e.status = 'ACTIVE' AND e.revoked_at IS NULL
       JOIN classes c ON c.class_id = e.class_id AND c.deleted_at IS NULL
@@ -115,7 +115,7 @@ public interface StudentRepository extends JpaRepository<Student, Integer> {
       WHERE s.deleted_at IS NULL
       GROUP BY s.student_id, s.email, s.full_name, c.name, p.name
       HAVING COUNT(DISTINCT CASE WHEN ar.status = 'ABSENT' THEN ar.record_id END) > 2 
-          OR COUNT(DISTINCT CASE WHEN gr.pass_status = 'FAIL' THEN gr.record_id END) > 2
+          OR COUNT(DISTINCT CASE WHEN gr.pass_status = 'FAIL' THEN gr.grade_record_id END) > 2
       """, nativeQuery = true)
   List<Object[]> findStudentWarningsAggregateAll();
 }

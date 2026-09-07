@@ -137,7 +137,7 @@ public class CohereService {
         );
         
         Map<String, Object> request = Map.of(
-            "model", "command-r-plus-08-2024",
+            "model", "command-r-08-2024",
             "messages", List.of(message),
             "temperature", 0.7,
             "max_tokens", 4000  // Increased to allow longer responses
@@ -182,7 +182,7 @@ public class CohereService {
         log.info("🌊 Starting Cohere streaming, prompt length: {} chars", prompt.length());
         
         Map<String, Object> request = Map.of(
-            "model", "command-r-plus",
+            "model", "command-r",
             "message", prompt,
             "temperature", 0.7,
             "max_tokens", 2000,

@@ -410,7 +410,7 @@ public class ChatController {
             .context(session.getContext())
             .createdAt(session.getCreatedAt())
             .updatedAt(session.getUpdatedAt())
-            .messageCount(session.getMessages() != null ? session.getMessages().size() : 0)
+            .messageCount(0) // Optimized: prevent N+1 queries since frontend doesn't use this
             .build();
     }
     
