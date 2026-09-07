@@ -104,7 +104,7 @@ function AppLayout({ children }: AppLayoutProps) {
     // Prefetch data khi hover sidebar - map path -> API endpoints
     const prefetchMap: Record<string, { url: string; params?: any }[]> = {
         '/users': [{ url: '/api/user-views' }, { url: '/api/user-stats/roles' }, { url: '/api/roles', params: { active: true } }, { url: '/api/centers/lite' }],
-        '/centers': [{ url: '/api/centers' }],
+        '/centers': [{ url: '/api/centers/all' }],
         '/roles': [{ url: '/api/roles', params: { active: true } }, { url: '/api/permissions/groups' }],
         '/classes': [{ url: '/api/classes' }, { url: '/api/centers/lite' }, { url: '/api/programs/lite' }],
         '/students': [{ url: '/api/students' }, { url: '/api/programs' }],

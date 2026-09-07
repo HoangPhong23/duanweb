@@ -14,7 +14,9 @@ public class DashboardService {
     }
 
     public DashboardSummaryDTO getSummary(Integer centerId) {
-        DashboardSummaryProjection proj = dashboardRepository.getDashboardSummaryNative(centerId);
+        DashboardSummaryProjection proj = centerId == null 
+            ? dashboardRepository.getDashboardSummaryNativeAll()
+            : dashboardRepository.getDashboardSummaryNativeByCenter(centerId);
         
         return DashboardSummaryDTO.builder()
                 .totalCenters(proj != null && proj.getTotalCenters() != null ? proj.getTotalCenters() : 0)

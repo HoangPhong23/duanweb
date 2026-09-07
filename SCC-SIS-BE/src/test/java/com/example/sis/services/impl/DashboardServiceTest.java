@@ -37,7 +37,7 @@ class DashboardServiceTest {
             @Override public Long getTotalLecturers() { return 3L; }
         };
 
-        when(dashboardRepository.getDashboardSummaryNative(1)).thenReturn(mockProj);
+        when(dashboardRepository.getDashboardSummaryNativeByCenter(1)).thenReturn(mockProj);
 
         // WHEN
         DashboardSummaryDTO result = dashboardService.getSummary(1);

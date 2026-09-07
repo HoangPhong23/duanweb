@@ -14,14 +14,27 @@ public interface DashboardRepository extends JpaRepository<Center, Integer> {
         "(SELECT COUNT(*) FROM centers) AS totalCenters, " +
         "(SELECT COUNT(DISTINCT e.student_id) FROM enrollments e " +
         " LEFT JOIN classes c ON e.class_id = c.class_id " +
+        " WHERE e.status IN ('ACTIVE', 'PENDING')) AS totalStudents, " +
+        "(SELECT COUNT(*) FROM classes) AS totalClasses, " +
+        "(SELECT COUNT(*) FROM programs) AS activeCourses, " +
+        "(SELECT COUNT(DISTINCT ur.user_id) FROM user_roles ur " +
+        " JOIN roles r ON ur.role_id = r.role_id " +
+        " WHERE r.code = 'LECTURER') AS totalLecturers", 
+       nativeQuery = true)
+    DashboardSummaryProjection getDashboardSummaryNativeAll();
+
+    @Query(value = "SELECT " +
+        "(SELECT COUNT(*) FROM centers) AS totalCenters, " +
+        "(SELECT COUNT(DISTINCT e.student_id) FROM enrollments e " +
+        " LEFT JOIN classes c ON e.class_id = c.class_id " +
         " WHERE e.status IN ('ACTIVE', 'PENDING') " +
-        " AND (:centerId IS NULL OR c.center_id = :centerId)) AS totalStudents, " +
-        "(SELECT COUNT(*) FROM classes c WHERE :centerId IS NULL OR c.center_id = :centerId) AS totalClasses, " +
+        " AND c.center_id = :centerId) AS totalStudents, " +
+        "(SELECT COUNT(*) FROM classes c WHERE c.center_id = :centerId) AS totalClasses, " +
         "(SELECT COUNT(*) FROM programs) AS activeCourses, " +
         "(SELECT COUNT(DISTINCT ur.user_id) FROM user_roles ur " +
         " JOIN roles r ON ur.role_id = r.role_id " +
         " WHERE r.code = 'LECTURER' " +
-        " AND (:centerId IS NULL OR ur.center_id = :centerId)) AS totalLecturers", 
+        " AND ur.center_id = :centerId) AS totalLecturers", 
        nativeQuery = true)
-    DashboardSummaryProjection getDashboardSummaryNative(@Param("centerId") Integer centerId);
+    DashboardSummaryProjection getDashboardSummaryNativeByCenter(@Param("centerId") Integer centerId);
 }

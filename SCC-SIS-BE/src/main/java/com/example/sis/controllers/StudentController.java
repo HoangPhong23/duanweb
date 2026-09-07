@@ -280,8 +280,17 @@ public class StudentController {
     @GetMapping("/warnings")
     @PreAuthorize("@authz.isSuperAdmin(authentication) or @authz.hasRole(authentication, 'ACADEMIC_STAFF') or @authz.hasRole(authentication, 'TEACHER') or @authz.hasRole(authentication, 'LECTURER')")
     public ResponseEntity<java.util.Map<String, Object>> getAllStudentWarnings(
-            @RequestParam(required = false) Integer centerId
+            @RequestParam(name = "centerId", required = false) String centerIdParam
     ) {
+        Integer centerId = null;
+        if (centerIdParam != null && !centerIdParam.trim().isEmpty() && !centerIdParam.equalsIgnoreCase("null") && !centerIdParam.equalsIgnoreCase("undefined") && !centerIdParam.equalsIgnoreCase("all")) {
+            try {
+                centerId = Integer.parseInt(centerIdParam.trim());
+            } catch (NumberFormatException e) {
+                // Ignore and use null
+            }
+        }
+        
         List<java.util.Map<String, Object>> allWarnings = studentService.getAllStudentWarnings(centerId);
         
         java.util.Map<String, Object> response = new java.util.HashMap<>();
