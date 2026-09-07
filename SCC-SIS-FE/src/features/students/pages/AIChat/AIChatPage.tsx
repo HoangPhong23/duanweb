@@ -15,7 +15,7 @@ import {
     FileText,
     ArrowLeft,
 } from 'lucide-react';
-import { createChatSession, getChatSessions, getChatSessionDetails, sendChatMessage, deleteChatSession, type ChatSessionDTO, type ChatMessageResponse, type ChatSessionDetailsResponse } from '@/shared/api/ai-chat';
+import { createChatSession, getChatSessions, getChatSessionDetails, sendChatMessage, sendChatMessageStream, deleteChatSession, type ChatSessionDTO, type ChatMessageResponse, type ChatSessionDetailsResponse } from '@/shared/api/ai-chat';
 import type { AIChatMessage } from '@/shared/api/ai-chat';
 import { 
     uploadKnowledgeDocument, 
@@ -169,24 +169,44 @@ export default function AIChatPage() {
         setIsLoading(true);
 
         try {
-            const response = await sendChatMessage(currentSessionId, userMessage);
+            // Add a temporary empty assistant message to stream into
+            const tempTimestamp = new Date().toISOString();
+            setMessages((prev) => [
+                ...prev, 
+                {
+                    role: 'assistant',
+                    content: '', // Will be updated as chunks arrive
+                    timestamp: tempTimestamp,
+                }
+            ]);
 
-            // Add assistant response
-            const assistantMessage: AIChatMessage = {
-                role: 'assistant',
-                content: response.message,
-                timestamp: response.timestamp,
-            };
-            setMessages((prev) => [...prev, assistantMessage]);
+            let fullResponse = '';
 
-            // Update session last message
+            await sendChatMessageStream(
+                currentSessionId, 
+                userMessage, 
+                (chunk) => {
+                    fullResponse += chunk;
+                    // Update the last message (the assistant one we just added)
+                    setMessages((prev) => {
+                        const newMessages = [...prev];
+                        newMessages[newMessages.length - 1] = {
+                            ...newMessages[newMessages.length - 1],
+                            content: fullResponse,
+                        };
+                        return newMessages;
+                    });
+                }
+            );
+
+            // Update session last message in the sidebar
             setChatSessions((prev) =>
                 prev.map((s) =>
                     s.id === currentSessionId.toString()
                         ? {
                               ...s,
-                              lastMessage: response.message.slice(0, 50) + '...',
-                              timestamp: response.timestamp,
+                              lastMessage: fullResponse.slice(0, 50) + '...',
+                              timestamp: new Date().toISOString(),
                           }
                         : s,
                 ),
