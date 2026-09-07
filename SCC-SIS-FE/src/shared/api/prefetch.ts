@@ -24,7 +24,7 @@ export function prefetchCommonData(userRoles: string[] = []) {
     // Wave 1: Các API cần cho Dashboard & Global UI (TopNav, Menu)
     const wave1 = [];
     if (isStaffOrAdmin || isLecturer) {
-        wave1.push({ url: '/api/dashboard/summary' });
+        wave1.push({ url: '/api/v1/dashboard/summary' });
         wave1.push({ url: '/api/students/warnings' });
     }
     if (isStaffOrAdmin) {

@@ -38,21 +38,10 @@ public class StudentClassServiceImpl implements StudentClassService {
             throw new IllegalArgumentException("Student not found with ID: " + studentId);
         }
 
-        // Lấy tất cả classes từ repository
-        List<ClassEntity> allClasses = classRepository.findAll();
+        // Lấy tất cả classes mà student đã enroll (1 query)
+        List<ClassEntity> studentClasses = classRepository.findClassesByStudentId(studentId);
 
-        // Filter classes mà student này đã enroll
-        return allClasses.stream()
-                .filter(classEntity -> {
-                    // Kiểm tra xem student có enrollment trong class này không
-                    List<Enrollment> enrollments = enrollmentRepository
-                            .findActiveByClassAndStudent(
-                                    classEntity.getClassId(),
-                                    studentId,
-                                    LocalDate.now()
-                            );
-                    return !enrollments.isEmpty();
-                })
+        return studentClasses.stream()
                 .map(this::toClassResponse)
                 .collect(Collectors.toList());
     }

@@ -126,12 +126,12 @@ export default function MyClassesPage() {
             setLoading(true);
             const response = await getMyClasses();
             setClasses(response.data);
+            setLoading(false); // Unblock UI immediately after getting classes
 
-            // Find the most recent in-progress lesson
-            await findContinueLesson(response.data);
+            // Find the most recent in-progress lesson in the background
+            findContinueLesson(response.data).catch(console.error);
         } catch (error: any) {
             toast.error(error?.response?.data?.message || 'Không thể tải danh sách lớp học');
-        } finally {
             setLoading(false);
         }
     };

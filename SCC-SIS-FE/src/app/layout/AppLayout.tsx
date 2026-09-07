@@ -108,7 +108,7 @@ function AppLayout({ children }: AppLayoutProps) {
         '/roles': [{ url: '/api/roles', params: { active: true } }, { url: '/api/permissions/groups' }],
         '/classes': [{ url: '/api/classes' }, { url: '/api/centers/lite' }, { url: '/api/programs/lite' }],
         '/students': [{ url: '/api/students' }, { url: '/api/programs' }],
-        '/': [{ url: '/api/dashboard/summary' }, { url: '/api/students/warnings' }],
+        '/': [{ url: '/api/v1/dashboard/summary' }, { url: '/api/students/warnings' }],
     };
 
     const prefetchedPaths = React.useRef(new Set<string>());

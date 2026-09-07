@@ -144,4 +144,16 @@ public interface ClassRepository extends JpaRepository<ClassEntity, Integer> {
     boolean isLecturerAssignedToClass(@Param("lecturerId") Integer lecturerId, 
                                       @Param("classId") Integer classId);
 
+    /**
+     * Lấy danh sách lớp học mà học viên đã ghi danh
+     */
+    @Query("SELECT DISTINCT c FROM ClassEntity c " +
+            "JOIN FETCH c.center JOIN FETCH c.program " +
+            "LEFT JOIN FETCH c.createdBy LEFT JOIN FETCH c.updatedBy " +
+            "JOIN Enrollment e ON e.classEntity.classId = c.classId " +
+            "WHERE e.student.studentId = :studentId " +
+            "AND e.status IN ('ACTIVE', 'PENDING') " +
+            "AND c.deletedAt IS NULL " +
+            "ORDER BY c.startDate DESC, c.classId DESC")
+    List<ClassEntity> findClassesByStudentId(@Param("studentId") Integer studentId);
 }
