@@ -81,6 +81,7 @@ public class AttendanceServiceImpl implements AttendanceService {
             for (AttendanceSession session : existingSessions) {
                 String key = classId + "-" + session.getAttendanceDate().toString();
                 TeacherScheduleResponse scheduleItem = new TeacherScheduleResponse();
+                scheduleItem.setSessionId(session.getSessionId());
                 scheduleItem.setClassId(classId);
                 scheduleItem.setClassName(clazz.getName());
                 scheduleItem.setAttendanceDate(session.getAttendanceDate());

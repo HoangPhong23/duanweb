@@ -7,6 +7,7 @@ import java.time.LocalDate;
  */
 public class TeacherScheduleResponse {
 
+    private Integer sessionId;
     private Integer classId;
     private String className;
     private LocalDate attendanceDate;
@@ -14,6 +15,14 @@ public class TeacherScheduleResponse {
     private String studyTime; // "MORNING", "AFTERNOON", or "EVENING"
 
     // Getters and Setters
+    public Integer getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(Integer sessionId) {
+        this.sessionId = sessionId;
+    }
+
     public Integer getClassId() {
         return classId;
     }

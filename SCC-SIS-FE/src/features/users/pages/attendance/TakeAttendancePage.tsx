@@ -203,28 +203,6 @@ export default function TakeAttendancePage() {
         });
     };
 
-    const ensureSessionCreated = async (): Promise<number> => {
-        if (isEditMode && sessionId) return sessionId;
-        const records = students.map((student) => ({
-            enrollmentId: student.enrollmentId!,
-            studentId: student.id,
-            status: 'ABSENT' as ApiAttendanceStatus,
-            notes: undefined,
-        }));
-
-        const res = await createAttendanceSession({
-            classId: parseInt(classId),
-            teacherId: me!.userId,
-            attendanceDate: date,
-            notes: '',
-            records,
-        });
-        const newSessionId = (res.data as any).sessionId;
-        setSessionId(newSessionId);
-        setIsEditMode(true);
-        return newSessionId;
-    };
-
     // Nút "Lưu": Lưu cả Từ khóa điểm danh + Kết quả điểm danh
     const handleSave = async () => {
         if (!me?.userId && !isEditMode) {
@@ -234,33 +212,11 @@ export default function TakeAttendancePage() {
 
         setIsSubmitting(true);
         try {
-            let currentSid = sessionId;
-            if (!isEditMode || !currentSid) {
-                currentSid = await ensureSessionCreated();
-            }
-
-            // 1. Lưu từ khóa điểm danh nếu có nhập
-            if (customCode.trim()) {
-                await setAttendanceCode(currentSid, {
-                    attendanceCode: customCode.trim().toUpperCase(),
-                    codeEnabled: true,
-                });
-                setCodeActive(true);
-                setCodeSessionId(currentSid);
-            } else if (codeActive && currentSid) {
-                // Tắt mã nếu xóa trống
-                await setAttendanceCode(currentSid, {
-                    attendanceCode: '',
-                    codeEnabled: false,
-                });
-                setCodeActive(false);
-            }
-
-            // 2. Lưu bảng điểm danh
+            // 1. Chuẩn bị danh sách điểm danh thực tế
             const records = students.map((student) => {
                 const record = attendanceRecords.get(student.enrollmentId);
                 return {
-                    recordId: record?.recordId!,
+                    recordId: record?.recordId,
                     enrollmentId: student.enrollmentId!,
                     studentId: student.id,
                     status: record?.status || 'ABSENT',
@@ -268,19 +224,45 @@ export default function TakeAttendancePage() {
                 };
             });
 
-            if (isEditMode && sessionId) {
-                await updateAttendanceSession(sessionId, { notes: '', records });
+            let currentSid = sessionId;
+
+            if (isEditMode && currentSid) {
+                // Buổi đã tồn tại -> cập nhật bản ghi điểm danh
+                await updateAttendanceSession(currentSid, { notes: '', records });
             } else {
-                await createAttendanceSession({
+                // Buổi chưa có -> tạo mới 1 lần duy nhất với đầy đủ dữ liệu thực tế
+                const res = await createAttendanceSession({
                     classId: parseInt(classId),
                     teacherId: me!.userId,
                     attendanceDate: date,
                     notes: '',
                     records,
                 });
+                currentSid = (res.data as any).sessionId;
+                setSessionId(currentSid);
+                setIsEditMode(true);
             }
 
-            showSuccessToast('Thành công', 'Đã lưu điểm danh và từ khóa thành công');
+            // 2. Xử lý từ khóa điểm danh (nếu có nhập hoặc đã bật)
+            if (currentSid) {
+                if (customCode.trim()) {
+                    await setAttendanceCode(currentSid, {
+                        attendanceCode: customCode.trim().toUpperCase(),
+                        codeEnabled: true,
+                    });
+                    setCodeActive(true);
+                    setCodeSessionId(currentSid);
+                } else if (codeActive) {
+                    // Tắt mã nếu xóa trống
+                    await setAttendanceCode(currentSid, {
+                        attendanceCode: '',
+                        codeEnabled: false,
+                    });
+                    setCodeActive(false);
+                }
+            }
+
+            showSuccessToast('Thành công', 'Đã lưu điểm danh thành công');
             setTimeout(() => navigate(`/attendance?view=${viewMode}&date=${date}`), 400);
         } catch (error: any) {
             const errorData = error?.response?.data;
@@ -382,8 +364,9 @@ export default function TakeAttendancePage() {
                         </div>
                         <button
                             onClick={async () => {
-                                if (sessionId) {
-                                    await setAttendanceCode(sessionId, { attendanceCode: '', codeEnabled: false });
+                                const targetSid = sessionId || codeSessionId;
+                                if (targetSid) {
+                                    await setAttendanceCode(targetSid, { attendanceCode: '', codeEnabled: false });
                                     setCodeActive(false);
                                     showSuccessToast('Thông báo', 'Đã tắt mã điểm danh');
                                 }

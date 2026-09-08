@@ -1,6 +1,8 @@
 package com.example.sis.controllers;
 
 import com.example.sis.dtos.attendance.*;
+import com.example.sis.exceptions.BadRequestException;
+import com.example.sis.exceptions.NotFoundException;
 import com.example.sis.repositories.UserRoleRepository;
 import com.example.sis.services.AttendanceService;
 import jakarta.validation.Valid;
@@ -79,6 +81,8 @@ public class AttendanceController {
         try {
             AttendanceSessionResponse response = attendanceService.createSession(request, currentUserId);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (BadRequestException | NotFoundException e) {
+            throw e;
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
@@ -129,6 +133,8 @@ public class AttendanceController {
         try {
             AttendanceSessionResponse response = attendanceService.updateSession(sessionId, request, currentUserId);
             return ResponseEntity.ok(response);
+        } catch (BadRequestException | NotFoundException e) {
+            throw e;
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
